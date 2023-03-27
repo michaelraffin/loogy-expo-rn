@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>81597197145-uh0epubmujncgrlc7gemci0o14am0sq6.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.81597197145-uh0epubmujncgrlc7gemci0o14am0sq6</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCndIXvBG5D6bGTnOZ5XzBidIGo12Dq39U</string>
+	<key>GCM_SENDER_ID</key>
+	<string>81597197145</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.raffin0000.Nidz</string>
+	<key>PROJECT_ID</key>
+	<string>nidz-19e58</string>
+	<key>STORAGE_BUCKET</key>
+	<string>nidz-19e58.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:81597197145:ios:9f140c188c2ce97d97ba48</string>
+</dict>
+</plist>

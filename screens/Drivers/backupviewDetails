@@ -1,0 +1,994 @@
+
+  function  ViewDetails(props){
+    
+	var route = props.route	 
+	var navigation = props.navigation 
+
+
+console.log('route',route)
+   const  [isReady,setDataReady] = useState(false)
+   const [backloadDate, setBackloadDate] = React.useState(null);
+   const [visible, setVisible] = React.useState(false);
+   const [calendarStatus, setCalendar] = React.useState(false);
+   const [checked, setChecked] = React.useState(false);
+   const [category, setCategory] = useState('One-Way');
+   const [results, setResult] = useState('One-Way');
+   const [status, setStatus] = useState(true);
+   const [userProfile, setUserProfile] = useState({user_details :{applicantType:''}});
+   const {referneceOrder,type} = route.params;
+   const [haulDetails, setLoadDetails] = useState({item:{status:''}});
+   const [currentRoute, setSelectedRoute] = useState(null);
+   const [didViewAs, setUserTypeView] = useState(type);
+   const scrollViewRef = useRef(null);
+   const [isSameLoad,setSameLoad] = useState(false);
+   const {setUserVehicle,getCurrentUser,getCurrentUserLocation,driverDetails} = useContext(BookingContext);
+   const [profile, setProfile] = useState({profileID:'C07-0508'});
+   const bottomSheetRef = useRef<BottomSheet>(null);
+   const navigatedDirection = useRef(null); 
+   const [sheetIndexRef,setSsheetIndexRef] =  useState(1);
+   const [isSheetDisplay,setisSheetDisplay] =  useState(false);
+   const [isNavigateContent,setNavigateContent] =  useState(false);
+   const snapPoints = useMemo(() => ['10%','50%',Platform.OS === 'android'  ? '95%' :'35%'], []); 
+   const completedPoints = useMemo(() => ['75%','76%'],[]); 
+   const navigationOptionPoints = useMemo(() => ['10%','20%'], []); 
+ 
+
+  // let client = mqtt.connect('mqqt://localhost:4444') // create a client
+
+  function showMQQT(){
+    // Toast.showWithGravity('This is a long toast at the top.', Toast.LONG, Toast.TOP);
+
+// client.on('connect', function () {
+//   client.subscribe('Loogy-x1-10Raffin', function (err) {
+//     if (!err) {
+//       client.publish('presence', 'Hello mqtt')
+//     }
+//   })
+// })
+
+//     client.on('message', function (topic, message) {
+//       // message is Buffer
+//       console.log(message.toString())
+//       client.end()
+//     })
+  }
+ 
+
+  useEffect(() => {   
+    try {
+      setLoadDetails(referneceOrder)
+      setStatus(false)
+      setDataReady(true)
+      getProfileAccount().then(profile=> {
+        setUserProfile(profile.data.data[0].user_details)
+      })
+      Animated.spring(opacityV2,{toValue:1,useNativeDriver:true}).start();
+    
+    } catch (error) {
+  return Alert('Error')      
+    }
+}, [referneceOrder])
+
+const handleSheetChanges = useCallback((index: number) => {
+  if ( haulDetails === null || haulDetails.item.status === 'Completed') {
+    return
+  }
+setSsheetIndexRef(index)
+Animated.spring(opacityV2,{toValue:index === 0 ? 0 :1,useNativeDriver:true}).start();
+}, []);
+
+async function getProfileAccount(){ 
+  try {
+    const response = await axios.post('/user/Loogy/profile',{"id":getCurrentUser().id });
+      return response
+  }  catch (error){
+      console.log(error)
+    alert('ERRPR')
+  }
+}
+
+const initiateSocketConnection = () => {
+  // socket.on("connect", () => {
+  //   var message = {
+  //     long:'CDXXX',
+  //     lat:321
+  //   }
+  //   socket.emit('delivery', message);
+  //   socket.on("delivery", (arg) => {
+  //     console.log('REACT NATIVE',arg); // world
+  //     alert(arg)
+  //   });
+  // })
+}
+
+let opacity = new Animated.Value(1);
+let opacityV2 = useRef(new Animated.Value(0)).current 
+let showHideView = useRef(new Animated.Value(0)).current 
+
+const animatedStyles = [
+  styles.box,
+  {
+    width: 10,
+    height: 10,
+  }
+];
+
+const animate = easing => {
+  opacity.setValue(0);
+  Animated.timing(opacity, {
+    toValue: 1,
+    duration: 1200,
+    easing
+  }).start();
+};
+
+const  setCalendarData = (e)=>{
+  try {
+    if (moment(e).isSameOrAfter(haulDetails.item.trips[haulDetails.item.trips.length - 1].returnedDate)){
+      setCalendar(false)
+      setBackloadDate(e)
+    }else{
+      setCalendar(false)
+    }
+  }catch{
+    console.log('setCalendarData setCalendarData')
+  }
+}
+ 
+const  displayAndroidCalendar = React.useCallback(()=>{
+  try {
+    var preferedDate = haulDetails.item.trips[haulDetails.item.trips.length - 1].returnedDate
+    return  <DateTimePicker
+      is24Hour={true}
+      display="default"
+      minimumDate={moment(haulDetails.item.trips[haulDetails.item.trips.length - 1].returnedDate).toDate() }
+      mode={"date"}
+      value={ backloadDate === null ? moment(preferedDate ).toDate() : moment(backloadDate).toDate() }
+      onChange={(date,selectedDate)=>  setCalendarData(moment(selectedDate).format('LL'))  }
+      
+      /> 
+    }catch{
+      return <BigLoader/>
+    } 
+    },[backloadDate])
+
+
+    const displayField = ()=>{
+      return (
+        <View>
+          <Input   
+       label="Mobile Phone Number"
+       keyboardType={"numeric"}
+       placeholder="(+09 000 000 00)"
+       maxLength={11}
+       clearButtonMode="while-editing"
+       returnKeyType="send"
+       style={{ width: '80%', marginRight: 20,marginLeft:20}}
+     />
+        </View>
+      )
+    }
+    
+  function validateResult(item) {
+    setLoadDetails({item:item.data.results[0]})
+    if (item.data.results[0].userReference != getCurrentUser().id) {
+      setSameLoad(false)
+    //   Alert.prompt('Enter secret code', null, (text) =>
+    //  console.log('You entered ' + text)
+    //   );
+    }else {
+      setSameLoad(true)
+      if (item.data.count === 1) {
+        setLoadDetails({ item: item.data.results[0] });
+      } else {
+        navigation.goBack();
+      }
+    }
+
+   
+  }
+
+   async function fetchProduct() { 
+    try {   
+      var e = route.params.referneceOrder
+			var orderStatus = 'Pending' 
+			const data = { id: e, queryType: 'load-id', storeOwner: 'storeOwner', isAPI: true,referenceOrder:e,number:20,showLimit:true,queryData:{status:orderStatus,userReference: e}};
+			const response = await axiosV2(getCurrentUser().authToken,getCurrentUser().email).post('/store/LoogyPooling', data);
+			return response; 
+       return  response
+    }catch (error) { 
+      if (error.response.data.stack.includes('InvalidTokenError')) {
+        LoginRequired()
+      }else {
+        alert('Pleas try again...')
+      }
+      }
+  }
+ 
+   const _handlePress = (e) => { 
+    console.log(e)
+    Linking.openURL(`https://waze.com/ul?ll=${e[1]},${e[0]}&navigate=yes`);
+  };
+  function currencyFormat(num) {
+    return '₱' + num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+  }
+
+   const didLoad =()=>{
+    setStatus(true)
+    takeLoadService().then ((data) => {
+      if (data === null) {
+        console.log(' getCurrentUser()', getCurrentUser())
+        alert('Pleas try again...')
+        setStatus(false)
+        return
+      }
+      var param = {
+        title:`L-[${haulDetails.item.referenceOrder}] Load has been Accepted!`,
+        body: `You will received any updates before the loading schedule`,
+      }
+      let notif =   schedulePushNotification(param).then(()=>{
+      }) 
+     
+      ToastAndroid.show('Item has been successfully loaded!', ToastAndroid.LONG);
+      navigation.goBack()
+      setStatus(false)
+    }) 
+   }
+  async function takeLoadService() {
+    try {  
+      const user = getCurrentUser()
+      var backLoad = checked ? { backloadDates:backloadDate}:null
+       const parameter = {
+      _id:haulDetails.item.referenceOrder,
+      status:'On-Scheduled',
+      notes: backLoad,
+      taker:{
+        email:user.application_info.email,
+        user:user.user_details,
+        userID:user.id,
+        takenLast:Date(),
+        takerLocation:getCurrentUserLocation()
+      }
+    }
+    const response = await  axiosV2(getCurrentUser().authToken,getCurrentUser().email).post('/Loogy/load', parameter).catch((error)=>console.log(error))
+     return response
+    }catch (error) {
+      const err = error as AxiosError
+      console.log('error ',err)
+      console.log('error accept order',error)
+      return null
+      if (error.response.data.stack.includes('InvalidTokenError')) {
+        LoginRequired()
+      }else {
+        alert('Pleas try again...')
+      }
+    }
+  }
+  const displayDescription = (e) =>{
+    try {
+      return e.substring(0, 20)
+    } catch (error) {
+      return ""
+    }
+  }
+  const displayVehicleType = (data) => {
+    try {
+      return (
+        <TouchableOpacity
+          >
+          <View style={{
+              flexDirection:'row',
+                height:'auto',
+                borderRadius:20,
+                margin:20,
+            }}>
+            <View style={{width:100,
+              alignItems:'center',
+              justifyContent:'center'}}>
+                  <Image    resizeMode='contain' source={{uri:data.imageUrl}} style={{width:'100%',height:100,marginLeft:20}}/>
+                </View>  
+                  <View style={{flex:1,width:'70%'}}>
+                  <Text style={{marginLeft:20,marginTop:10,fontWeight:'700',  color:'#747d8c',}} category='h6' >{data.name !== undefined ? data.name : data.name}</Text>
+                  <Text style={{marginLeft:20,marginTop:10,marginRight:20}} category='c1'  >{'data.id '=== 'selectedVehicle'  ? displayDescription(data.description)  :data.description }</Text> 
+                
+                </View>    
+            </View> 
+            </TouchableOpacity>
+      )
+    }catch {
+      return <View/>
+    }
+    
+  }
+  const toolTilContent = () =>{
+    return (
+      <View style={{flexDirection: 'row', alignContent: 'center',justifyContent:'center',alignItems:'center' }}>
+      <Text    category="c1" style={{fontWeight:'bold',color:'black'}}  >Backload is activated, your warehouse address :Main avenue 5th Ave.Quezon City, Metro Manila, PH</Text>
+     <Image  source={{uri:'https://static.thenounproject.com/png/4404538-200.png'}}  style={{width:25,height:25  }}/>
+ </View>
+    )
+  }
+
+  const contentLogsMaker = (e) =>{
+    try {
+        var content = []
+      e.map((data, index) => {
+        content.push(
+          <TouchableOpacity>
+          <View style={{marginLeft:20}}>
+            <Text    category="c1"style={{marginTop:5,fontWeight:'bold'}}   >
+            {data.title}
+        </Text>
+        <View  style={{backgroundColor:'white', flexDirection:'row',left:0,alignContent:'center',justifyContent:'space-between',alignItems:'center'}} >
+        <Text    category="c1"style={{marginTop:5}}   >
+        {data.description}
+        </Text>
+        <Text    category="c1"style={{marginTop:5,color:'#6ab04c',marginRight:20}}   >
+        {moment(data.date).format('MMMM Do YYYY, h:mm:ss A')} 
+        </Text>
+          </View>
+          <Text    category="c1"style={{marginTop:5,fontStyle:'italic'}}   >
+        {moment(data.date).startOf('minute').fromNow()}
+        </Text>
+            
+        <Text    category="c1"style={{marginTop:5,marginBottom:10}}>
+        {locatinTracker(data)}
+        </Text>
+        <Divider/>
+          </View>
+          </TouchableOpacity>
+        )
+      })
+      return <View style={{marginBottom:20,marginTop:20}}>{content}</View>  
+    } catch (error) {
+     return <BigLoader/> 
+    }
+  }
+
+
+  const locatinTracker = (data)=>{
+    try {
+      return `in  ${data.takerLocation.region}, ${data.takerLocation.city}, ${data.takerLocation.country}`
+    } catch (error) {
+      return "Carrier Location was disabled " 
+    }
+  }
+
+  const displayTransactionlogs = (logs) => {
+    try {
+      var content = []
+      return (
+        <React.Fragment >
+      <View style={{backgroundColor:'white',height:40,marginTop:20}}> 
+            <Layout style={styles.container} level="1">
+              <Text style={styles.subTotal} category="h6">
+                Transaction Logs
+              </Text>
+            </Layout> 
+            </View>
+            <Divider/> 
+            <View > 
+                {contentLogsMaker(logs)}
+            </View>
+          <View style={{marginLeft:20,marginBottom:20,marginTop:10}}>
+          <Text style={styles.subTotal} category="h6">
+                        Carrier Details
+                      </Text>
+              {displayAvatarProfile()}
+                    </View>
+          </React.Fragment>
+      )
+    } catch (error) {
+      return <BigLoader/>
+    }
+  }
+  const displayAvatarProfile =() =>{
+    try {
+          var takerProfile = haulDetails.item.transactionLogs[0].taker
+          return   <AvatarProfile contact={'ssss'} profileName={takerProfile.name} profileEmail={takerProfile.contactNumber} profileAvatar={'https://media.istockphoto.com/vectors/user-icon-flat-isolated-on-white-background-user-symbol-vector-vector-id1300845620?k=20&m=1300845620&s=612x612&w=0&h=f4XTZDAv7NPuZbG0habSpU0sNgECM0X7nbKzTUta3n8='} />
+    }catch{
+    return <View/>
+    }
+  }
+  const renderPolyLineCoordinates = () => {
+    // var coordinates = haulDetails.item
+    // var list = []
+    // coordinates.map(item => {
+    //   // data.departDetails.coordinates[0]
+    //   // { latitude: 37.8025259, longitude: -122.4351431 },
+    // return 
+    // })
+  }
+  const renderMarker = () => {
+    var e = haulDetails.item
+    const items = []
+   
+    try { 
+      e.trips.map((data, index) => {
+        var latitude = data.departDetails.coordinates[0]
+        var longitude = data.departDetails.coordinates[1]
+        console.log('RENDER MARKER',data.arrivalDetails.coordinates)  
+        items.push(
+          <MapView.Polyline
+          coordinates={[{latitude:latitude,longitude:longitude},{latitude:data.arrivalDetails.coordinates[0],longitude:data.arrivalDetails.coordinates[1]}]}
+          strokeColor="#27ae60"
+          strokeColors={['#7F0000']}
+          strokeWidth={3}
+         />
+        )
+        items.push(<View key ={index}>
+            {/* <Marker
+          coordinate={data.departDetails.coordinates}
+          anchor={{x:0,y:0}}
+          ><View style={{alignContent:'center',alignItems:'center',justifyContent:'center'}}>
+            <View style={{backgroundColor:'#6ab04c',borderColor:'black',borderWidth:3,height:15,width:15,borderRadius:20,elevation:2,marginTop:4}}></View>
+        </View>
+        <View style={{borderRadius:40,height:25,width:'auto',backgroundColor:'white',marginTop:-40}}>
+          <Text style={{margin:5}} category="c1">{data.depart.substring(0, 20)}...</Text>
+          </View>
+          </Marker> */}
+          <MapView.Marker
+            pinColor={'green'}
+          coordinate={{
+            latitude: longitude   ,
+            longitude:latitude}}
+          title={data.depart }
+          description={`Departure`}
+        >
+          <View style={{borderColor:'#27ae60',borderWidth:1,backgroundColor:'#27ae60',height:20,width:20,borderRadius:20,alignContent:'center',alignItems:'center',justifyContent:'center'}}>
+        <View style={{backgroundColor:'white',height:10,width:10,borderRadius:2}}/>
+      </View>
+          </MapView.Marker>
+      </View>
+        )
+        items.push(<View key ={index }>
+          {/* <Marker
+          coordinate={data.arrivalDetails.coordinates}
+          anchor={{x:0,y:0}}
+          ><View style={{alignContent:'center',alignItems:'center',justifyContent:'center'}}>
+            <View style={{backgroundColor:'white',borderColor:'black',borderWidth:3,height:15,width:15,borderRadius:2,elevation:2,marginTop:4}}></View>
+        </View>
+        <View style={{borderRadius:40,height:25,width:'auto',backgroundColor:'#dff9fb',marginTop:-40,borderWidth:0.5,borderColor:'#6ab04c'}}>
+          <Text style={{margin:5}} category="c1">{data.arrival.substring(0, 20)}...</Text></View>
+          </Marker> */}
+          {/* <Marker
+        anchor={{x:0,y:20}}
+          coordinate={{
+            latitude: data.arrivalDetails.coordinates[1]   ,
+            longitude:data.arrivalDetails.coordinates[0]}}
+          // title={data.arrival }
+          // description={'Arrival'}
+        ><View style={{borderColor:'black',borderWidth:1,backgroundColor:'black',height:20,width:20,borderRadius:2,alignContent:'center',alignItems:'center',justifyContent:'center'}}>
+          <View style={{backgroundColor:'white',height:10,width:10,borderRadius:2}}></View>
+        </View>
+          </Marker> */}
+
+{/* //WORKING */}
+        <MapView.Marker
+        anchor={{x:0,y:0}}
+          coordinate={{
+            latitude: data.arrivalDetails.coordinates[1],
+            longitude:data.arrivalDetails.coordinates[0]}}
+        ><View style={{alignContent:'center',alignItems:'center',justifyContent:'center'}}>
+        <View style={{backgroundColor:'white',borderColor:'black',borderWidth:3,height:15,width:15,borderRadius:2,elevation:2,marginTop:4}}></View>
+    </View>
+    {/* <View style={{borderRadius:40,height:25,width:'auto',backgroundColor:'#ecf0f1',marginTop:-40,borderWidth:0.5,borderColor:'#6ab04c'}}>
+      <Text style={{margin:5}} category="c1">{data.arrival.substring(0, 20)}...</Text></View> */}
+          </MapView.Marker>
+          </View>
+        )
+      })
+      return items
+    } catch {
+    return  <MapView.Marker
+      coordinate={{
+        latitude:  8.228346   ,
+        longitude:  124.243059  }}
+      title={"Loogy" }
+      description={"0917-843-4776"}
+    />
+  }
+  }
+  const displayFooter = (price) => {
+    return (
+      <React.Fragment >
+    <View style={{backgroundColor:'white',height:40,marginTop:0}}> 
+          <Layout style={styles.container} level="1">
+            <Text style={styles.subTotal} category="h6">
+              Offered Price
+            </Text>
+            <Text style={styles.subTotalItem} category="c1">
+             {true ? Platform.OS === 'android' ? currencyFormat(Number(haulDetails.item.offeredPrice)) : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(haulDetails.item.offeredPrice)) : '0.00'}
+            </Text>
+          </Layout> 
+          </View>
+          <Divider/> 
+          <View >
+            {checked ?  <Layout style={{margin:20,borderRadius:5,backgroundColor:'#f7f1e3'}} level="1" >
+            <View status='control' style={{margin:20}}>
+            <Text    category="c1" style={{fontWeight:'bold',color:'black'}}  >
+            Backload Note:
+            </Text>
+             <Text    category="c1"style={{marginTop:5}}   >
+             Backload is activated, your warehouse address :<Text    category="c1" style={{fontWeight:'bold',color:'black'}}  >Main avenue 5th Ave.Quezon City, Metro Manila, PH</Text>
+             </Text>
+             {Platform.OS === 'android' ?    <TouchableOpacity  onPress={()=>setCalendar(!calendarStatus)}>
+         <View style={{marginTop:20,width:'auto',height:40,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor:'white',flexDirection:'row',alignContent:'center',justifyContent:'center',alignItems:'center'}}>
+             <Text style={{color:'black',fontWeight:'bold'}}> {backloadDate === null ?'Set your Backload Date':backloadDate}</Text> 
+            <TouchableOpacity  disabled={status} onPress={()=>setCalendar(!calendarStatus)} style={{zIndex:1}}><View style={{backgroundColor:'white',marginLeft:20,height:25,width:25,zIndex:1, borderRadius: 25}}>
+            
+<View style={{width:30,height:30,borderRadius:50/2}}>
+<Svg  xmlns="http://www.w3.org/2000/Svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" color={'black'} stroke-width="2" stroke-Linecap="round" stroke-Linejoin="round" class="feather feather-calendar"><Rect x="3" y="4" width="18" height="18" rx="2" ry="2"></Rect><Line x1="16" y1="2" x2="16" y2="6"></Line><Line x1="8" y1="2" x2="8" y2="6"></Line><Line x1="3" y1="10" x2="21" y2="10"></Line></Svg>  
+ </View>
+</View></TouchableOpacity>
+
+         </View>
+            </TouchableOpacity> :  displayAndroidCalendar() }
+             </View>  
+          </Layout>  : null}
+          {Platform.OS === 'android'  ? calendarStatus ?  displayAndroidCalendar() : null : null}
+          </View>  
+        </React.Fragment>
+    )
+  } 
+  
+  const getLastDate=(e)=>{
+    try {
+    var data =  haulDetails.item.trips[haulDetails.item.trips.length - 1]
+    } catch (error) {
+      return moment(new Date() ).add(1, 'd').toDate()
+    }
+  }
+  const displayStopButton = () =>{
+    return (
+      <Button  status='success' style={{backgroundColor:'#eb4d4b',borderColor:'#eb4d4b',width:width/4,borderRadius:5}}>END</Button>
+    )
+  }
+  const didTappedDisplaySheet = (e)=>{
+    // navigatedDirection.current = e
+    // setSelectedRoute(e)
+    console.log('selected route',e)
+    // setNavigateContent(true)
+    // bottomSheetRef.current?.snapToIndex(1)
+    
+    // bottomSheetRef.current?.snapToIndex(1)
+    // setisSheetDisplay(true)
+  }
+  const didTappeClosedDisplaySheet = ()=>{
+    setisSheetDisplay(false)
+    bottomSheetRef.current?.close()
+  }
+  const displayGoButton =(e)=>{
+    return <Button 
+    onPress={()=>  didTappedDisplaySheet(e)}  
+    accessoryLeft={()=><Image  source={{uri:'https://localflowershop.sgp1.digitaloceanspaces.com/product/1653673788322-icons8-navigation-50%20%281%29.png'}}  style={{width:18,height:18 }}/>} status='success' style={{backgroundColor:'#0652DD',borderColor:'#0652DD',width:width/4,borderRadius:5,marginRight:40}}>GO</Button>
+  }
+  const displayItems=(e)=>{
+   const content = [<View/>] 
+   try { 
+    e.trips.map((data, index) => {
+      content.push(
+        <>
+        <CardJourney journey={data} referenceOrder={e.referenceOrder}/>
+        <TouchableOpacity
+         onPress={()=> didTappedDisplaySheet(data) } 
+        >
+          <View style={{alignContent:'center',alignItems:'flex-end',backgroundColor:'white'}}>
+        {haulDetails.item.transactionLogs === undefined ? null :haulDetails.item.status === 'On-Scheduled' ? displayGoButton(data) : null }
+        {haulDetails.item.transactionLogs === undefined ? null :haulDetails.item.status === 'In-Transit' ? displayGoButton(data) : null }
+        <Divider/>
+        </View>
+        </TouchableOpacity>
+        </>
+      ) 
+    })
+    return content
+   }catch{
+     return <View/>
+   }
+   }
+
+   const location =()=>{
+    return (
+    <TouchableOpacity>
+       <View style={{flexDirection: 'row', alignContent: 'center',justifyContent:'center',alignItems:'center',marginTop:10 }}>
+       <Text style={{marginRight:5,color:'white'}} category="c1">Quezon City, Luzon, PH</Text>
+       </View>
+       </TouchableOpacity>
+       )
+ }
+
+ const getOriginAccount =()=>{
+   
+  try {
+    //SUPABASE AUTH ACCOUNT
+    return driverDetails.app_metadata.provider
+  } catch (error) {
+    //EMAIL LOGIN TYPE
+    return getCurrentUser().app_metadata.provider
+  }
+}
+const getDynamicProfile = () =>{
+  try {
+    if (getOriginAccount() === "email"){
+      return haulDetails.item.user.application_info
+   }else {
+     return haulDetails.item.user.application_info
+   }
+  }catch(error){
+    return {name:'Not available',
+    contactNumber:'',
+    avatar:'https://localflowershop.sgp1.digitaloceanspaces.com/product/1651903967051-512.png'
+    }
+    console.log('error',error)
+  }
+}
+
+
+const ProfileContent =()=>{
+  try {
+    return <View style={{height:'auto',top:5,backgroundColor:'white',marginBottom:20}}>
+    <AvatarProfile   profileName={haulDetails.item.user.user_details.name} profileEmail={haulDetails.item.user.application_info.email} profileAvatar={haulDetails.item.user.application_info.picture}/>
+      <View style={{position:'absolute',top:20,right:30,width:'auto',height:150,backgroundColor:'white',alignContent:'center',alignItems:'center'}}>
+    <TouchableOpacity onPress={()=>  	navigation.navigate('ViewQRDetails', { screen: 'ViewQRDetails',referenceOrder: { item:haulDetails} }) }>
+      <View style={{backgroundColor:'white',alignContent:'center',alignItems:'center'}}>
+      <QRCode
+      size={60}
+        logo={{uri: "https://localflowershop.sgp1.digitaloceanspaces.com/product/1651903967051-512.png"}}
+      value={haulDetails.item.referenceOrder}
+    />
+    </View>
+    <Text category="c1" style={{marginLeft:0,marginTop:8}}>Tap to share details</Text>
+    </TouchableOpacity>
+    </View></View>
+  }catch (error)
+  {
+    return (<View style={{height:'auto',top:5,backgroundColor:'white',marginBottom:20}}>
+   
+    <AvatarProfile  profileName={getDynamicProfile().name} profileEmail={getDynamicProfile().contactNumber} profileAvatar={getDynamicProfile().avatar}/>
+      <View style={{position:'absolute',top:20,right:30,width:'auto',height:150,backgroundColor:'white',alignContent:'center',alignItems:'center'}}>
+    <TouchableOpacity onPress={()=>  	navigation.navigate('ViewQRDetails', { screen: 'ViewQRDetails',referenceOrder: { item:haulDetails} }) }>
+      <View style={{backgroundColor:'white',alignContent:'center',alignItems:'center'}}>
+      <QRCode
+      size={60}
+        logo={{uri: "https://localflowershop.sgp1.digitaloceanspaces.com/product/1651903967051-512.png"}}
+      value={haulDetails.item.referenceOrder}
+    />
+    </View>
+    <Text category="c1" style={{marginLeft:0,marginTop:8}}>Tap to share details</Text>
+    </TouchableOpacity>
+    </View>
+    </View>)
+//     console.log('ERROR EMPTY',error,haulDetails)
+//     return <View style={{width:width,height:150,backgroundColor:checked ? '#27ae60' :'white'}}>
+//     <Text style={{marginLeft:20,marginTop:120,color:'black',fontWeight:'bold'}} category='h1'>Empty Details</Text>
+// </View>
+  } 
+}
+const rightContent =()=>{
+   return (
+   <TouchableOpacity>
+      <View style={{flexDirection: 'row', alignContent: 'center',justifyContent:'center',alignItems:'center' }}>
+      <Text style={{marginRight:5}}>Scan by QR</Text>
+      <Image  source={{uri:'https://static.thenounproject.com/png/4404538-200.png'}}  style={{width:25,height:25  }}/>
+      </View>
+      </TouchableOpacity>
+      )
+}
+
+async function onCheckedChange  (isChecked) {
+   setChecked(isChecked);
+}
+
+const validateThisTrack =()=>{
+  return <React.Fragment>
+    {status ? 	<ActivityIndicator style={{ display: status ? 'flex' : 'none' }} size="small" color="#0000ff" /> :  <Input   
+       label="Verification Code"
+       placeholder="XXXX XXX"
+       maxLength={11}
+       clearButtonMode="while-editing"
+       returnKeyType="send"
+       disabled={false ? true : false}
+       style={{ width: '80%', marginRight: 20,marginLeft:20,marginTop:120}}
+      //  value={mobile}
+      //  onChangeText={value => setMobile(value)} 
+     />}
+    
+ <View  style={{ height: 30,width:30, top:60,position:'absolute', alignSelf:'flex-end',left:20,opacity:status ? 0.2 : 1}} >
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <View style={{width:30,height:30,borderRadius:50/2}}><Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:30,height:30  }}/></View>
+            </TouchableOpacity>
+        </View>
+  </React.Fragment>
+}
+
+const socialMediaProfile = () => {
+  try {
+    if (driverDetails.app_metadata.provider != "email"){
+      return getCurrentUser().user_details.applicantType
+      }else {
+        return driverDetails.user_details.applicantType
+      }
+  }catch {
+    return 'email'
+  }
+
+}
+const updateNow = (type)=>{
+  setStatus(true)
+  ModifyThisLoad(haulDetails,type,getCurrentUser(),getCurrentUserLocation()).then(item=>{
+    setStatus(false)
+    var param = {
+      title:`You have some updates from your load`,
+      body: `[${haulDetails.item.referenceOrder}] Load has been updated!`,
+    }
+    let notif =   schedulePushNotification(param).then(()=>{
+    }) 
+   
+    ToastAndroid.show('Item has been successfully loaded!', ToastAndroid.LONG);
+    navigation.goBack()
+  })
+}
+const displayTypeOfButton = ()=>{
+  var type = haulDetails.item.status
+  switch (type) {
+  case 'Pending':
+      return (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNow('On-Scheduled')} >
+        <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': 'black' : 'black',alignContent:'center',justifyContent:'center',alignItems:'center'}}>
+           <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Accept Load'}</Text>
+        </View>
+           </TouchableOpacity>)
+      break
+      case 'On-Scheduled':
+        return (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNow('In-Transit')} >
+          <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': 'black' : 'black',alignContent:'center',justifyContent:'center',alignItems:'center'}}>
+             <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Start Loading'}</Text>
+          </View>
+             </TouchableOpacity>)
+      break
+      case 'In-Transit':
+        return (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNow('Completed')} >
+          <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': 'black' : 'black',alignContent:'center',justifyContent:'center',alignItems:'center'}}>
+             <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Complete'}</Text>
+          </View>
+             </TouchableOpacity>)
+      break
+      case 'Completed':
+        return (
+          <TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} >
+          <View style={{width:width / 2,height:35,borderRadius:50,opacity:status ? 0.5: 1,alignContent:'center',justifyContent:'center',alignItems:'center',flexDirection:'row',borderWidth:0.2,borderColor:'black'}}>
+          <Image
+              source={{ uri: 'https://img.icons8.com/color/344/26e07f/approval--v1.png' }}
+              style={{ width: 15, height: 15, marginRight: 5 }}
+            />
+            <Text category="c1">Load Complete</Text>
+          </View>
+             </TouchableOpacity>
+        )
+      break
+      default:
+        return (
+          <TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false}  >
+      <Text>Waiting...</Text>
+      </TouchableOpacity>
+        )
+      break
+  }
+}
+
+const validateButtonType =()=>{ 
+  // if ('Driver' === "Driver") {
+    var notSameContent = (
+      <TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={didLoad} >
+      <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': 'black' : 'black',alignContent:'center',justifyContent:'center',alignItems:'center'}}>
+         <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Accept Load'}</Text>
+      </View>
+         </TouchableOpacity>)
+  
+    return isSameLoad ? <View><Text>Delete</Text></View>  : notSameContent
+  // }else {
+  //  return (<TouchableOpacity disabled={true}  >
+  //       <Text style={{color:'black',fontSize:16}}>Only driver can accept this load</Text>
+  //      </TouchableOpacity>) 
+  // }
+
+}
+const getBackgroundLevel = () =>{
+  switch (sheetIndexRef) {
+    case 0:
+      return 1
+    case 1:
+        return 1
+      break;
+    default:
+      return 0.2
+      break;
+  }
+}
+const get = () =>{
+  switch (sheetIndexRef) {
+    case 0:
+      return 1
+    case 1:
+        return 1
+      break;
+    default:
+      return 0.2
+      break;
+  }
+}
+const mapContent = () =>{
+    try { 
+      console.log('haulDetails MAP',haulDetails.item.trips[0].departDetails.coordinates[0])
+      return (
+        <><Animated.View style={{height:50,width:width,backgroundColor:'white', display:sheetIndexRef === 2 ? 'flex' : 'none', transition: "all 1s ease-in"}}/>
+        <MapView
+        
+            mapType={Platform.OS === 'android'  ? "google" : "none"}
+            showsBuildings={true} 
+            // provider={Platform.OS === 'android'  ? "google" : "none"}
+            rotateEnabled={false}
+            fillColor="rgba(255,0,0,0.5)"
+            showsIndoors={true}
+              showsCompass={true}
+              showsPointsOfInterest={true}
+              zoomTapEnabled={true}  
+              strokeWidth={2}
+              strokeColor="red"
+              region={Platform.OS === 'android' ? {
+              //   heading: 20,
+              //  pitch: 20,
+              //  altitude: 100,
+               latitude:haulDetails.item.trips[0].departDetails.coordinates[0],
+               longitude: haulDetails.item.trips[0].departDetails.coordinates[1],
+               latitudeDelta:0,
+               longitudeDelta: 0.5
+             } : null }
+              style={{
+                zIndex:-1,
+                width:Dimensions.get("window").width,
+                height: height ,  
+                opacity: getBackgroundLevel()
+              }}
+            >
+          {renderMarker()}
+          </MapView> 
+            </>
+      )
+    }catch(error){
+      
+      console.log('Error in Map ERROR ', error)
+      return  <Text>Error in Map </Text>
+    }
+ 
+}
+
+const navigationitems =()=>{
+  var details = navigatedDirection.current
+    console.log('details.departDetail navigationitems',details)
+  var coordaintesGoogle = encodeURI(`https://www.google.com/maps/dir/?api=1&origin=${details.departDetails.coordinates[1]},${details.departDetails.coordinates[0]}&destination=${details.arrivalDetails.coordinates[1]},${details.arrivalDetails.coordinates[0]}&travelmode=driving`)
+  var icons = [{
+    image:'https://cdn141.picsart.com/338356866082211.png',
+  title:'Open Waze App',
+  navigationLink:`https://waze.com/ul?saddr=${currentRoute.arrivalDetails.coordinates[1]},${currentRoute.arrivalDetails.coordinates[0]}&daddr=${currentRoute.departDetails.coordinates[1]},${currentRoute.departDetails.coordinates[0]}&z=10&t=s`
+  },{
+    image:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Google_Maps_icon_%282015-2020%29.svg/2048px-Google_Maps_icon_%282015-2020%29.svg.png',
+  title:'Open Google Map',
+  navigationLink:encodeURI(`https://www.google.com/maps/dir/?api=1&origin=${details.depart}&destination=${details.arrival}&travelmode=driving`) //Convert this to Coordinates
+    }
+  ]
+  if (Platform.OS === 'ios'){
+    icons.push({
+      title:'Open iOS Map',
+      image:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAXTNpmU7_rJLCcbO5_lQ4_r3CEJApMtZfS5YzcWNgxtq8VwqldNBESzepGsOEQR3rNEs&usqp=CAU',
+      navigationLink:`http://maps.apple.com/?saddr=${currentRoute.arrivalDetails.coordinates[1]},${currentRoute.arrivalDetails.coordinates[0]}&daddr=${currentRoute.departDetails.coordinates[1]},${currentRoute.departDetails.coordinates[0]}&z=10&t=s`
+      })
+  }
+  var navigationSheetItems = []
+  icons.map( item=>{
+    navigationSheetItems.push(
+      <View style={{margin:10,backgroundColor:'white',width:width}}>
+      <TouchableOpacity onPress={()=> Linking.openURL(item.navigationLink)}>
+      <View style={{flexDirection:'row',alignContent:'flex-start',alignItems:'center',backgroundColor:'white',marginLeft:20}}>
+    <Image  source={{uri: item.image}}  style={{width:25,height:25  }}/>
+   <Text style={{marginLeft:20,fontWeight:'bold'}}>{item.title}</Text>
+   </View>
+    </TouchableOpacity>
+    </View>
+    )
+  })
+  return  <View>
+    <View  style={{ height: 30,width:30,  alignSelf:'flex-start',left:20,opacity:status ? 0.2 : 1}} >
+  <TouchableOpacity onPress={() =>setNavigateContent(false)}>
+      <Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:'100%',height:30  }}/>
+    </TouchableOpacity>
+</View>{navigationSheetItems}
+  </View> 
+  }
+
+
+  const completedContent =()=>{
+    try {
+      return (
+        <React.Fragment>
+          <View style={{alignContent:'center',alignItems:'center',justifyContent:'center',width:width,height:height / 3,backgroundColor:'white'}}>
+          <Image  source={{uri:'https://cdn.dribbble.com/users/1275019/screenshots/6269490/______8_4x.png?compress=1&resize=1600x1200&vertical=top'}}  style={{width:200,height:200  }}/>
+          </View>
+        </React.Fragment>
+      )
+    } catch (error) {
+      console.log('error completedContent',error)
+      return <View style={{height:200,width:width,backgroundColor:'red'}}/>
+    }
+  }
+// const isCbottomSheetRef.current === present() ? 0.2 :
+
+ const content =()=>{
+  if (haulDetails === null){
+    return <Small/>
+  }
+    try {
+    return  <React.Fragment>
+    { haulDetails.item.status === 'Completed' ? completedContent() :  mapContent()}
+    <BottomSheet
+ ref={bottomSheetRef}
+ index={1}
+ snapPoints={isNavigateContent ? navigationOptionPoints :haulDetails.item.status === 'Completed'  ? completedPoints:  snapPoints}
+ onChange={handleSheetChanges}
+//  onAnimate={(animate)=>console.log('animate',animate)}
+>
+  {isNavigateContent ?  navigationitems()  :<View style={styles.contentContainer}>
+  {/* {sheetIndexRef === 1 ? : } */}
+<View  style={{ height: 30,width:30, top:10,position:'absolute', alignSelf:'flex-end',left:20,opacity:status ? 0.2 : 1}} >
+  <TouchableOpacity onPress={() => navigation.goBack()}>
+    {/* <View style={{width:25,height:30,borderRadius:50/2}}> */}
+      <Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:'100%',height:30  }}/>
+    {/* </View> */}
+    </TouchableOpacity>
+</View>
+{/* {validateButtonType()} */}
+{displayTypeOfButton()}
+ <BottomSheetFlatList
+ data={ [1] }
+ style={{marginTop:10}}
+ keyExtractor={i => i}
+ renderItem={(item)=>
+<Animated.View style={{opacity:opacityV2}}>
+{ProfileContent()}
+{haulDetails.isBackload ?<Text style={{marginLeft:20,fontWeight:'bold'}} category='h6'>Backload</Text> : null }
+<View style={{marginTop:20}}/> 
+<View style={{flexDirection:'row',width:width-20,justifyContent:'space-between'}}>
+<Text style={{marginLeft:20,fontWeight:'bold'}} category='h6'>Journey Details</Text>
+<View style={{ backgroundColor:  'white', marginBottom:20, width: 90, height: 25, borderRadius: 50 / 2, justifyContent: 'center', alignContent: 'center',marginLeft:20,alignItems:'center' }}><Text style={{ marginLeft: 10, marginRight: 20,  color:'#0652DD' ,fontWeight:'bold',width:'auto'}} category='c2' >{haulDetails.item.loadType}</Text></View>
+</View>
+{haulDetails != null ? sheetIndexRef !== 0 ?   displayItems(haulDetails.item) : null  : null }
+<Text style={{marginTop:40,marginLeft:20,fontWeight:'bold',marginBottom:0}} category='h6'>Transportation</Text>
+{displayVehicleType(haulDetails.item.selectedVehicle)}
+{ haulDetails.item.transactionLogs === undefined ? null:displayTransactionlogs(haulDetails.item.transactionLogs)}
+{displayFooter(haulDetails.item.selectedVehicle)}
+{getLastDate(haulDetails.item.trips)}
+{calendarStatus ?  displayAndroidCalendar() : null} 
+</Animated.View>
+ }
+ > 
+ </BottomSheetFlatList>
+ </View>}
+</BottomSheet>
+</React.Fragment>
+   } catch (error) {
+     return <React.Fragment>
+       <BigLoader/><BigLoader/>
+       <BigLoader/>
+     </React.Fragment>
+   }
+ }   
+const navigationWazeIcon =()=>{
+  return <Image  source={{uri:'https://cdn141.picsart.com/338356866082211.png'}}  style={{width:25,height:25  }}/>
+}
+const navigationGoogleIcon =()=>{
+  return <Image  source={{uri:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Google_Maps_icon_%282015-2020%29.svg/2048px-Google_Maps_icon_%282015-2020%29.svg.png'}}  style={{width:15,height:15  }}/>
+}
+return  <React.Fragment>
+{haulDetails === null ? null : content()} 
+<StatusBar style={'dark'}/></React.Fragment>
+}

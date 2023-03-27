@@ -1,0 +1,91 @@
+{
+  "expo": {
+
+    "plugins": [
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsImpl": "maplibre",
+          "RNMapboxMapsDownloadToken":"pk.eyJ1IjoibWFtbmlkeiIsImEiOiJjanZsNnhhZ24wdDE1NDlwYmRvczJzNDk2In0.Bl06Qp0TgR-KfisAsKbciQ"
+        }
+      ]
+    ],
+    "name": "Loogy",
+    "description": "Loogy is a management tracking tool for shipper and carrier",
+    "slug": "loogy",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "loogy",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.raffin0000.loogy",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Loogy application requires camera permission to record your sound. Allow Loogy to use it?",
+        "NSCameraUsageDescription": "Loogy application requires camera permission to record your video message. Allow Loogy to use it?",
+        "NSPhotoLibraryUsageDescription": "Loogy application requires access to your photos, allowing you to upload a proof of payment.",
+        "NSLocationUsageDescription": "Loogy application requires access to your location, allowing you to to track or trace users location",
+        "NSLocationWhenInUseUsageDescription": "Loogy application requires access to your location, allowing you to to track or trace users location",
+        "NSLocationAlwaysUsageDescription": "Loogy application requires access to your location, allowing you to to track or trace users location"
+      },
+      "associatedDomains": [
+        "applinks:app.loogy.co",
+        "aplinks:https://app.loogy.co"
+      ]
+    },
+    "android": {
+      "versionCode": 90,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyD8cWcQd3tnRSp4oMC6izU4rd8WiNiNpjY"
+        }
+      },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.raffin0000.loogy",
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA"
+      ],
+       "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "https://app.loogy.co",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+
+    "web": {
+      "favicon": "./assets/images/favicon.png",
+      "build": { "babel": { "include": [ "@ui-kitten/components" ] }}
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b1646a23-7471-4d58-89c3-3d8b76aa08c3"
+      }
+    }
+  }
+}
