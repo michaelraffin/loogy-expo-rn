@@ -20,6 +20,8 @@ import {Uploader} from '../screens/Product';
 import Services from '../screens/Services/Main'; 
 import Map from '../screens/Services/MapLocation'; 
 import PartnerDetails from '../screens/Services/PartnerDetails'; 
+import ServiceSelector from '../screens/Services/ServiceSelector'; 
+import ChatPage from  '../screens/Chat/ChatPage'
 import List from '../screens/Services/List'; 
 import ServiceDetails from '../screens/Services/ServiceDetails'; 
 import BSummary from '../screens/Services/BookingSummary'; 
@@ -30,6 +32,7 @@ import Welcome from '../screens/Onboarding/';
 import Landing from '../screens/Onboarding/Landing';
 import AddNewTeam from '../screens/Team/AddNewTeam';
 import TeamList from '../screens/Drivers/TeamList'; 
+import MapRealTime from '../screens/Drivers/MapRealTime'; 
 import ProfileSetup from '../screens/Onboarding/ProfileSetup';
 import AppUpdate from '../screens/AppUpdate/AppUpdate'; 
 import { Dashboard ,LoadDetails,History, LoginDriver,UserProfile,ViewQRDetails,SearchView} from '../screens/Drivers'; 
@@ -52,11 +55,25 @@ export default function BottomTabNavigator(params) {
     const AppCoodinator =()=>{
       return(
     <BottomTab.Navigator
-    initialRouteName="Shop"
-    tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}> 
+    initialRouteName="Home"
+    tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
 <BottomTab.Screen
       name="Home"
-      component={DriverDashboard}
+      component={DriverDashboardNavigator}
+      options={{ 
+        tabBarIcon: ({ color }) =>  <DeliverBox color={color}/>,
+      }}
+/>
+<BottomTab.Screen
+      name="RealTimeMap"
+      component={RealTimeMapNavigator}
+      options={{ 
+        tabBarIcon: ({ color }) =>  <DeliverBox color={color}/>,
+      }}
+/>
+<BottomTab.Screen
+      name="ChatUser"
+      component={ChatUserPageNavigator}
       options={{ 
         tabBarIcon: ({ color }) =>  <DeliverBox color={color}/>,
       }}
@@ -67,8 +84,7 @@ export default function BottomTabNavigator(params) {
       options={{ 
         tabBarIcon: ({ color }) =>  <ShopingList color={color}/>,
       }}
-/>
-
+/> 
 <BottomTab.Screen
       name="LoadScanner"
       component={TabCameraScannerNavigator}
@@ -375,7 +391,8 @@ function DriverHistoryDashboard ({navigation,route}) {
 }
 
 const DriverStack = createStackNavigator<TabOneParamList>();
-function DriverDashboard ({navigation,route}) {
+function DriverDashboardNavigator ({navigation,route}) {
+  console.log('DriverDashboard Navigator')
   const routeName = getFocusedRouteNameFromRoute(route) ?? 'Service';
   navigation.setOptions({tabBarVisible: false})
   return (
@@ -534,22 +551,55 @@ function MapNavigator({navigation,route}) {
   )
 }
 
+
+//Real time Driver Finder
+const RealTimeMapStack = createStackNavigator<TabTwoParamList>(); 
+function RealTimeMapNavigator({navigation,route}) {
+  navigation.setOptions({tabBarVisible: false})
+  return (
+    <RealTimeMapStack.Navigator>
+    <RealTimeMapStack.Screen
+        name="RealTimeMap"
+        component={MapRealTime}
+        initialParams={{ itemId: 42 }}
+        options={{ headerTitle: 'Orders'  ,headerShown: false }}
+      />
+      </RealTimeMapStack.Navigator>
+  )
+}
+
+
+
+
+
+const ChatUserPageStack = createStackNavigator<TabTwoParamList>()
+function ChatUserPageNavigator({navigation,route}) {
+  // NAVIGATE' with payload
+  navigation.setOptions({tabBarVisible: false})
+  return (
+    <ChatUserPageStack.Navigator>
+    <ChatUserPageStack.Screen
+        name="PrivateChatMessage"
+        component={ChatPage}
+        initialParams={{ userId: 42 }}
+        options={{ headerTitle: 'Orders'  ,headerShown: true }}
+      />
+      </ChatUserPageStack.Navigator>
+  )
+}
+
+
 //Service
 const PartnersStack = createStackNavigator<TabTwoParamList>(); 
 function PartnersNavigator({navigation,route}) {
   navigation.setOptions({tabBarVisible: false})
   return (
     <PartnersStack.Navigator>
-      {/* <PartnersStack.Screen
-        name="Service"
-        component={Services}
-        options={{ headerTitle: 'Orders'  ,headerShown: false }}
-      />   */}
-<PartnersStack.Screen
-        name="PartnerDetails"
-        component={PartnerDetails}
-        options={{ headerTitle: 'Orders'  ,headerShown: false }}
-      />
+    <PartnersStack.Screen
+            name="PartnerDetails"
+            component={PartnerDetails}
+            options={{ headerTitle: 'Orders'  ,headerShown: false }}
+          />
 <PartnersStack.Screen
         name="Map"
         component={Map}
@@ -564,6 +614,11 @@ function PartnersNavigator({navigation,route}) {
 <PartnersStack.Screen
         name="ServiceDetails"
         component={ServiceDetails}
+        options={{ headerTitle: 'Service Details'  ,headerShown: false }}
+      />
+<PartnersStack.Screen
+        name="ServiceSelector"
+        component={ServiceSelector}
         options={{ headerTitle: 'Service Details'  ,headerShown: false }}
       />
 <PartnersStack.Screen
@@ -655,6 +710,7 @@ function WelcomeNavigator({navigation,route}) {
 
       const LoadStack = createStackNavigator<TabTwoParamList>(); 
       function LoadNavigator({navigation,route}) {
+        console.log('LoadNavigator')
         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Service';
         navigation.setOptions({tabBarVisible: false})
         return (
@@ -732,6 +788,20 @@ function LoginLandingNavigator({navigation,route}) {
         component={Useregistration}
         options={{ headerTitle: 'Shop'  ,headerShown: false }}
       />
+<RegistrationHistory.Screen
+        name="PrivateChatMessage"
+        component={ChatPage}
+        initialParams={{ itemId: 42 }}
+        options={{ headerTitle: 'Orders'  ,headerShown: false }}
+      />
+{/*       
+<BottomTab.Screen
+      name="RealTimeMap"
+      component={RealTimeMapNavigator}
+      options={{ 
+        tabBarIcon: ({ color }) =>  <DeliverBox color={color}/>,
+      }}
+/> */}
     </LoginLanding.Navigator>
   );
 }

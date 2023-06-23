@@ -12,7 +12,7 @@ import * as Permissions from "expo-permissions";
 import * as Location from "expo-location"; 
 import DateTimePicker from '@react-native-community/datetimepicker';
 import QRCode from 'react-native-qrcode-svg';
-import styles from '../../components/Journey/cardStyles'
+// import styles from '../../components/Journey/cardStyles'
 // import Toast from 'react-native-toast-message'; 
 var width = Dimensions.get('window').width; //full width
 var height = Dimensions.get('window').height; //full height
@@ -80,19 +80,7 @@ export default  function Card(props){
 									borderRadius: 25,
 									alignItems: 'center'
 								}}
-							>
-								<View style={props.badgeStyle}>
-									{/* <Image
-										source={{
-											uri:
-												'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'
-										}}
-										style={{
-											width: 30,
-											height: 30,
-											transform: [ { rotateZ: '180deg' } ]
-										}}
-									/> */}
+							><View style={props.badgeStyle}>
                   <Text style={{color:'#353b48',fontWeight:'bold'}} >{props.details.trips.length}</Text>
 								</View>
 							</View>
@@ -113,7 +101,7 @@ export default  function Card(props){
     
     const journey =(e)=>{
         var data = e
-        console.log('displayItems',e)
+        console.log('displayItems',props.journey)
         try {
           return ( <TouchableOpacity onPress={()=>	props.didView(props.details.referenceOrder)}  activeOpacity={1}>
             <React.Fragment>
@@ -160,22 +148,20 @@ export default  function Card(props){
                margin: 2,
                color:'#747d8c',
                marginLeft:11,
-              //  fontWeight:'bold'
              }}>{data.selectedDate}</Text>
              </TouchableOpacity>
            </Layout> 
            <Layout style={styles.containerContent} level='1'>
            <TouchableOpacity   onPress={()=>_handlePress(data.arrivalDetails.coordinates)}  style={styles.input} >
-             <Text 
-
+             <Text  
              category='c1'
               style={{
                flex: 1,
                margin: 2,
                marginLeft:11,
-              //  fontWeight:'bold',
                color:'#747d8c'
              }}>{displayDescription(data.arrival)}...</Text>
+{/* <Text>DSadsa</Text> */}
              </TouchableOpacity>
              <TouchableOpacity disabled={undefined === null ? true:false}  style={styles.inputRoundTripTouchable} >
                  <Text
@@ -188,13 +174,13 @@ export default  function Card(props){
               //  fontWeight:'bold'
              }}>
               {props.details.loadType === 'One-Way' ?'' : data.returnedDate}
-              {/* {moment(data.returnedDate,'MMMM DDD YYYY, h:mm:ss A').toDate().toDateString()} */}
               </Text>
              </TouchableOpacity>
            </Layout>
            </View>
            </React.Fragment></TouchableOpacity>)
-        }catch{
+        }catch(error){
+            console.log('error CARD2', error)
           return ( <TouchableOpacity  activeOpacity={1}>
             <React.Fragment>
                     <View style={{backgroundColor:'white',borderColor:'white',borderWidth:0.5,borderRadius:10,margin:10,marginRight:30,marginLeft:30,elevation: 2}}>
@@ -221,6 +207,7 @@ export default  function Card(props){
                marginLeft:11,
               //  fontWeight:'bold'
              }}>
+                ERROR
               {/* {moment(data.selectedDate,'MMMM DDD YYYY, h:mm:ss A').toDateString()} */}
               {data.selectedDate}</Text>
              </TouchableOpacity>
@@ -247,8 +234,6 @@ export default  function Card(props){
               //  fontWeight:'bold'
              }}>
               {props.details != undefined ? props.details.loadType === "One-Way" ? '':data.returnedDate :''}
-                {/* {moment(data.returnedDate,'MMMM DDD YYYY, h:mm:ss A').toDate().toDateString()} */}
-              {/* {data.returnedDate} */}
               </Text>
              </TouchableOpacity>
            </Layout>
@@ -258,3 +243,107 @@ export default  function Card(props){
         }
     return  journey(props.journey)
 }
+
+const styles = StyleSheet.create({
+    image: {
+      width: '100%',
+      height: 300,
+      resizeMode: 'cover',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    text: {
+      margin: 2,
+      marginTop: 20,
+      fontWeight: 'bold',
+      marginRight: 130,
+      marginLeft: 20
+    },
+    containesr: {
+      backgroundColor: 'white',
+      flex: 1,
+      flexDirection: 'column',
+      marginLeft: 20,
+      marginRight: 20
+    },
+
+  container: {
+    marginLeft:20,
+    marginRight:20,
+    marginBottom:5,
+    marginTop:5,
+    flexDirection: 'row',
+  },
+    layout: {
+  
+      backgroundColor: 'white',
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    }, container2: {
+      marginTop: 30,
+      flexDirection: 'row',
+      marginRight: 16,
+      marginLeft: 16
+    }, containerMulti: {
+      marginTop: 10,
+      flexDirection: 'row',
+      marginRight: 16,
+      marginLeft: 16, marginBottom: 0
+    }, 
+    containerMultiDate: {
+      marginTop: 12,
+      flexDirection: 'row',
+      marginRight: 16,
+      marginLeft: 16, 
+      marginBottom: 12,
+      // backgroundColor:'red'
+      height:50
+    },
+    containerContent: {
+      marginTop: -20,
+      flexDirection: 'row',
+      marginRight: 16,
+      marginLeft: 16, 
+      marginBottom: 12,
+      height:20
+    },
+    input: {
+      flex: 1,
+      margin: 2,
+      marginLeft:11,
+      
+    },  inputTouchableRight: {
+      flex: 1,
+      margin: 2,
+  marginRight:20,
+  marginLeft:15
+    },
+    inputRoundTripTouchable: {
+      flex: 1,
+      marginTop:2
+    },
+    inputRight: {
+      flex: 1,
+      margin: 2,
+    }, InActiveinputRight: {
+      flex: 1,
+  
+      margin: 2,
+      opacity: 0.3
+    },
+    subTotal:{
+      flex: 1,
+      margin: 2,
+      fontWeight:'bold'
+    },
+    subTotalItem:{
+      fontWeight:'bold',
+      fontSize:23,
+      alignContent:'flex-end',
+      margin: 2,
+    },
+  });
+  

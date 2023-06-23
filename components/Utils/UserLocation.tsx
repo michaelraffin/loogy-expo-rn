@@ -32,10 +32,13 @@ export default  function Dashboard({ route, navigation,errorMessage,hide }){
      "timezone": null
    });
 useEffect(() => { 
-    
+  
   try {
+    console.log('API')
     
-    // if (getCurrentUserLocation() === null) { 
+  // console.log('User Location Comonent details',getCurrentUserLocation())
+    if (getCurrentUserLocation() === null || getCurrentUserLocation() === null) { 
+      console.log('API')
       getUserLocation().then(item =>{
         if (item != null) {
           console.log('michael reverrse location ',item)
@@ -53,8 +56,23 @@ useEffect(() => {
           setDenied(true)
         }
       })
+    } else {
+      console.log('CACHE')
+      // console.log('User Location Comonent details',getCurrentUserLocation())
+      setDenied(false)
+          getReverse(getCurrentUserLocation().coordinates).then(userLocation =>{
+
+            console.log('async resylt',userLocation[0])
+          var convertedData = {} 
+          convertedData = userLocation[0]
+          convertedData.coordinates =  getCurrentUserLocation().coordinates
+            setAddress(convertedData)
+            setLocation(convertedData)
+            setStatus(false)
+          })
+    }
   } catch (error) {
-    
+    console.log('error state useEffect',error)
 Alert.alert(`Opps...Sorry`, `Please try again later`, [ 
 	{ text: 'Okay', onPress: () => console.log('None') },
   ],{
@@ -64,7 +82,7 @@ Alert.alert(`Opps...Sorry`, `Please try again later`, [
   }, [])
 
   async function getReverse(item){
-    console.log('michael reverrse location ',item)
+     
     let keys = {
       latitude : item.latitude,
       longitude :  item.longitude
@@ -83,17 +101,50 @@ Alert.alert(`Opps...Sorry`, `Please try again later`, [
       setStatus(false)
       return coords 
     }catch {
+      var convertedData = {latitude:14.5976408,longitude:121.0415411}
+      setLocation(convertedData)
       setStatus(false)
       setDenied(true)
+      getHeading()
+      watchHeadingUser()
+      
       return null
     }
  
   }
 
+  async function getHeading(){
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      console.log('status requestForegroundPermissionsAsync',status)
+      if (status == 'granted') {
+       
+      
+      }else {
+        console.log('get Locatin heading')
+      }
+    } catch (error) {
+      console.log('error',error)
+    }
+        }
+    
+    
+       async function watchHeadingUser(){
+    try {
+      let location = await Location.getCurrentPositionAsync({});
+      console.log("Loc ",location);
+      let watchHeading = await Location.watchHeadingAsync((watch)=>{
+        console.log('watch heading' ,watch)
+      })
+    } catch (error) {
+      console.log('error',error)
+    }
+        }
   const userLocationUI = ()=>{
-
+    // setAddress(getCurrentUserLocation())
+    // console.log('User Location Comonent details',getCurrentUserLocation())
     if (status){
-      return  <></>
+      return  <><Text>Loading..</Text></>
     }else { 
       if (denied ) {
         return   (<>
@@ -109,7 +160,10 @@ Alert.alert(`Opps...Sorry`, `Please try again later`, [
               <TouchableOpacity>
                      <View style={{flexDirection:'row',marginTop:5,marginLeft:20,alignContent:'center',alignItems:'center'}}>
                      <Image  source={{uri:'https://www.seekpng.com/png/full/802-8020358_hexagym-transparent-pin-drop-icon.png'}}  style={{width:10,height:15,marginRight:5 }}/>
-                     <Text category='p1' style={{fontWeight:'bold'}}>{address.region}, {address.district}, {address.city}</Text>
+                     <Text 
+                     ellipsizeMode="tail"
+                     numberOfLines={1} 
+                     category='p1' style={{fontWeight:'bold',width:width / 2}}>{address.region}, {address.district}, {address.city}</Text>
                      </View>
                      </TouchableOpacity>
                      </>)

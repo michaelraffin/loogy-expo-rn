@@ -317,17 +317,23 @@ export default function SearchView({ route, navigation }) {
 		if (userNotFound) {
 			LoginRequired();
 		} else {
-			navigation.navigate('LoadDetails', { screen: 'LoadDetails',referneceOrder: { item:data} })
+			navigation.navigate('LoadDetails', { screen: 'LoadDetails',referneceOrder: { item:data} ,viewType:"dashboard"})
 		}
 	};
 	function currencyFormat(num) {
-		return '₱' + num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+		try {
+			return '₱' + num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+		} catch {
+			return "No declared amount"
+		}
+		
 	  }
 	const journeyContent = (indexData, indexSection) => {
 		var data = indexData
+		console.log('results journeyContent',data.offeredPrice.string)
 		var returnedDate =  data.trips ? data.trips[0].returnedDate : new Date()
 		var departedDate =  data.trips ? data.trips[0].selectedDate : new Date()
-		var priceRange = data.offeredPrice === undefined  ? 0 : Number(data.offeredPrice)   //data.selectedVehicle.priceRange 
+		var priceRange = isNaN(data.offeredPrice)  ? 0 : Number(data.offeredPrice)   //data.selectedVehicle.priceRange 
 		// if (indexSection.index === 1) {
 			category
 			return (

@@ -24,16 +24,68 @@ import DashedLine from 'react-native-dashed-line';
 import {BookingContext}from  '../../components/Context/UserBookingContext'
 import ReactNativeAlgoliaPlaces from 'react-native-algolia-places'
 import {axios,axiosV2} from '../../components/Utils/ServiceCall'
+import {Cities} from '../../components/Utils/ListOfCities'
 import Axios from 'axios'; 
 import {LoginRequired} from '../../components/Errors/LoginRequired' 
 import { StatusBar } from 'expo-status-bar';
 import BottomSheet,{BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import { useIsFocused,useFocusEffect } from '@react-navigation/native';
 import {Small,BigLoader,ButtonLoader,InstagramContent} from '../../components/Loader';
+import { notifyGroup,roomListenerStandard,getActiveUsers,setOnline,socket,dynamicEmit} from '../../components/Utils/SocketManager';
+let paymentOptions =  [
+  // {
+  //   "itemName": "Bank Deposit",
+  //   "itemDetails": "1923-2392-2932",
+  //   "status": true,
+  //   "items": [
+  //     {
+  //       "itemName": "PNB",
+  //       "itemDetails": "4107-1004-4056",
+  //       "status": false,
+  //       "icon_url": "https://cdn6.aptoide.com/imgs/8/b/e/8be51499bebc917bde5f956937d66879_icon.png"
+  //     },
+  //     {
+  //       "itemName": "BPI",
+  //       "itemDetails": "9359-599-568",
+  //       "status": false,
+  //       "icon_url": "https://play-lh.googleusercontent.com/mjHDhET2n67GSZpmQtEBejwbXIkc5MtwrlmjhgMKoSMZkMbvb4XZmCikZNIOYo0Ur3CG"
+  //     }
+  //   ],
+  //   "key": "xx1"
+  // },
+  {
+    "itemName": "GCash",
+    "key": "xx2",
+    "itemDetails": "0975-365-3640",
+    "status": false,
+    "icon_url": "https://getcash.ph/wp-content/uploads/2021/01/Gcash-logo-Transparent-500x500-1.png"
+  },
+  {
+    "itemName": "Paymaya",
+    "key": "xxx2",
+    "itemDetails": "0965-548-1821",
+    "status": false,
+    "icon_url": "https://res.cloudinary.com/crunchbase-production/image/upload/c_lpad,f_auto,q_auto:eco,dpr_1/leeoq9lzt4bhvqnkl0kb"
+  },
+  {
+    "itemName": "Paypal",
+    "key": "xxx6",
+    "itemDetails": "0975-365-3640",
+    "status": false,
+    "icon_url": "https://cdn-icons-png.flaticon.com/512/174/174861.png"
+  },
+  {
+    "itemName": "Cash on Delivery",
+    "key": "xx4",
+    "itemDetails": "COD",
+    "status": true,
+    "icon_url": "https://www.iconbunny.com/icons/media/catalog/product/2/9/2906.10-cash-icon-iconbunny.jpg"
+  }
+]
 export default  function BookingSummary({ route, navigation }){
   const [initialPrice, setInitialPrice] = useState(0);
   const [items, setItems] = useState([1,2,3,4,5]);
-  const {setUserVehicle,getCurrentUser,driverDetails,getSelectedVehicle,userTrips,loadType,isBackload} = useContext(BookingContext);
+  const {setUserVehicle,getCurrentUser,driverDetails,getSelectedVehicle,userTrips,loadType,isBackload,getUpdateState} = useContext(BookingContext);
   const [status, setStatus] = useState(false);
   const [isReady, setReady] = useState(false);
   const [teams, setTeam] = useState([]);
@@ -42,22 +94,63 @@ export default  function BookingSummary({ route, navigation }){
   const isFocused = useIsFocused();
   const scrollViewRef = useRef();
 
+  const [selectedIndex, setSelectedIndex] = useState(3);
   const toggleSwitch = () => setIsEnabled(previousState => !previousState);
 	const bottomSheetRef = useRef<BottomSheet>(null);
 	const [isSheetDisplay,setisSheetDisplay] =  useState(false);
   const [isDataReady,setDataReady] =  useState(true);
-	const snapPoints = React.useMemo(() => ['35%',Platform.OS === 'android'  ? '50%' :'45%'], []);
-
+	const snapPoints = React.useMemo(() => ['25%',Platform.OS === 'android'  ? '50%' :'45%'], []);
+  const [shipperName, setShipperName] = useState(null);
+  const [shipperMobile, setShipperMobile] = useState(null);
   function currencyFormat(num) {
     return '₱' + num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
   }
+  function getCitiID (){
+    try {
+      let citiObject = Cities()
+      let regionID  =  citiObject.filter(item => item.name === userTrips[0].departDetails.meta_details.city)[0]
+      return  regionID
+    } catch (error) {
+      return 'Philippines'
+    }
+  }
+  useEffect(() => {
+    try {
+      if(isFocused) {
+  //     dynamicEmit("load-booking-watcher",{payload:{
+  //       room: "checkAllBookings"},
+  //       room:"checkAllBookings"
+  //     })  
+  // dynamicEmit("notify-city-group",{payload:{
+  //   type:"load",
+  //   room: "checkAllBookings",
+  //   bookingReference:"aYZA5H",
+  //   trips:userTrips,
+  //   loadDetails:userTrips,
+  //   userTrip:userTrips},
+  //   meta_data:null
+  // })
+      }
+
+      console.log('citiessss',getUpdateState())
+    } catch (error) {
+      console.log('citiessss',error)
+    }
+},[isFocused ])
   useEffect(() => {
       // console.log('fetchMatrix',fetchMatrix())
      if (isFocused){
       fetchListofGroups()
-     }
-    
+      setShipperName(getCurrentUser().application_info.full_name)
 
+    //  let city = `${getCitiID().province}-trucking` // Get Pickup Region /Cebu/
+    //  let id =  "D6ES6N"
+    // console.log('userTrips[0].departDetails.meta_details',getCitiID())
+    // let payload = {reference:id,state:"didLogin",owner:"expo"}
+    // let xxx = {room:city,payload}
+     }
+
+    //  notifyRegion({data:true})
   },[isFocused ])
   
   useEffect(() => {
@@ -65,6 +158,79 @@ export default  function BookingSummary({ route, navigation }){
       
 },[selectedGroup])
   
+
+const notifyRegion = (data)=>{
+  try {
+  
+  let city = `${getCitiID().province}-trucking` // Get Pickup Region /Cebu/
+   let id =  "D6ES6N"
+  console.log('userTrips[0].departDetails.meta_details',getCitiID())
+  let payload = {reference:id,state:"didLogin",owner:"expo",type:"load"}
+  let xxx = {room:city,payload}
+   // set City
+   // assign payload
+   // await success response
+//  dynamicEmit("load-state-follow",{payload:{room: city}})
+dynamicEmit("load-booking-watcher",{payload:{
+  room: "checkAllBookings"},
+  room:"checkAllBookings"
+})
+  dynamicEmit("notify-city-group",{payload:{
+    type:"load",
+    room: "checkAllBookings",
+    loadDetails:data,
+    userTrip:userTrips},
+    meta_data:data
+  })
+  // dynamicEmit("dynamic-leave-room",{payload:{room: 'room-checkAllBookings'}})
+    // setOnline({
+    //     room: 'davao-trucking',
+    //     payload: { reference: 'D6ES6N', state: 'didOnline',source:"expo",coordinates:userCoordinates,country:"ph", 
+    //   }
+    //   })
+  } catch (error) {
+    console.log('notifyRegion errorr',error,userTrips)
+  }
+}
+function loadPaymentContent(){
+  try {
+  var radioList = []
+        paymentOptions.map( data=> { 
+          if (data.itemName === 'Bank Deposit') { 
+               data.items.map( bank=> {
+              radioList.push(<Radio  key={bank.key}  status='danger' key={bank.itemName} disabled={!bank.status} > 
+              {bank.itemName}</Radio>)
+            })
+          }else {
+
+            radioList.push(<Radio  key={data.key}  status='danger' key={data.itemName} disabled={!data.status} > 
+            {data.itemName}</Radio>)
+          }
+        }) 
+  return radioList
+  } catch (error) {
+    return <Radio   status='danger' > 
+    Empty Error </Radio>
+  }
+}
+
+function displayRadioList () {
+  try {
+    
+  return ( <React.Fragment>
+    <View style={{marginLeft:20}}>
+    <RadioGroup 
+        selectedIndex={selectedIndex} 
+        onChange={index => setSelectedIndex(index)}
+        >{loadPaymentContent()} 
+        </RadioGroup>
+        </View>
+        {/* {displayPaymentDetailss()} */}
+      </React.Fragment>)
+  } catch (error) {
+    console.log('error displayRadioList',error)
+  }
+} 
 
   
    function  fetchMatrix (){
@@ -114,7 +280,7 @@ export default  function BookingSummary({ route, navigation }){
       flex: 1,
       margin: 2,
       marginLeft:11,
-      fontWeight:'bold'
+      fontWeight:'bold' 
     }}>{data.departDetails.address.substring(0, 20)}</Text>
     </TouchableOpacity>
   </Layout>
@@ -212,10 +378,16 @@ export default  function BookingSummary({ route, navigation }){
     // setInitialPrice(price)
     
   }
+  const checkButtonValidaity = ()=>{
+    if (initialPrice != 0 && shipperName === null && shipperMobile.length > 8) {
+    return  true
+    }else {
+      return false
+    }
+  }
   const displayTeamItems = ()=>{
     
     var renderedItem = []
-    console.log('list of teams',teams)
     teams.map(item =>{
       console.log('renderedItem',item)
       renderedItem.push(<Radio key={item.groupID}>
@@ -289,6 +461,7 @@ onChange={index =>  setSelectedGroup(index)}>
                       { "groupID": getCurrentUser().user_details.teamIDs[0].groupID}
                       ]
                     }
+
      const response = await axiosV2(getCurrentUser().authToken,getCurrentUser().email).post('/store/LoogyGroup', data);
      return response.data;
     } catch (error) { 
@@ -335,11 +508,10 @@ onChange={index =>  setSelectedGroup(index)}>
     }
   }
   function getUserGroup (){
-try {
-  return [teams[selectedGroup].groupID]
-} catch (error) {
+    try {
+      return [teams[selectedGroup].groupID]
+    } catch (error) {
   return []
-  
 }
   }
   const axiosV3 = (token,id)=>  Axios.create({
@@ -367,8 +539,11 @@ try {
       date:new Date(),
       userEmail:getUsersEmail(),//getOriginAccount() === "email" ? driverDetails.email :  user.application_info.email ,
       user:getCurrentUser(),
+      shippersName:shipperName,
+      shippersMobile:shipperMobile,
       ownerID:getCurrentUser().id
-      ,teamID:getUserGroup()
+      ,teamID:getUserGroup(),
+      paymentOptions: paymentOptions[selectedIndex]
         } 
        
      console.log('parameter,',getCurrentUser())
@@ -380,7 +555,7 @@ try {
       
       setStatus(false)
       
-      console.log('errerrerrerr',error)
+      
       const err = error as AxiosError
       console.log('errerrerrerr',error)
       Alert.alert(`Network error`, `Please try again later.`, [
@@ -403,18 +578,24 @@ try {
     setStatus(true)
     placeOrderService(e).then( status => {
       console.log('copy response',status)
-      var param = {
-        title:`L-[${status.data.results.referenceOrder}] Load has been Created!`,
-        body: `A copy of your itinerary has been sent to ${getUsersEmail()}`,
-      }
-      let notif =   schedulePushNotification(param).then(()=>{
-        setStatus(false)
-        if  (status != null ){
-          // navigation.navigate('Success',{orderDetails:status.data.results})
-          navigation.navigate('Home',{screen:'Success',params: { orderDetails: status.data.results}})
-          // navigation.navigate('Success',{orderDetails:status.data.results})
-        }  
-      }) 
+   
+      notifyRegion(status.data.results)
+    
+      setTimeout(()=>{
+        var param = {
+          title:`L-[${status.data.results.referenceOrder}] Load has been Created!`,
+          body: `A copy of your itinerary has been sent to ${getUsersEmail()}`,
+        }
+        let notif =   schedulePushNotification(param).then(()=>{
+          setStatus(false)
+          if  (status != null ){
+            // navigation.navigate('Success',{orderDetails:status.data.results})
+            navigation.navigate('Home',{screen:'Success',params: { orderDetails: status.data.results}})
+            // navigation.navigate('Success',{orderDetails:status.data.results})
+          }  
+        }) 
+      }, 1000);
+    
     })
   }
 
@@ -429,19 +610,41 @@ try {
     <ScrollView  
      ref={scrollViewRef}
       onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-    style={{ backgroundColor: 'white' }}> 
-      <View style={{marginTop:100}}/> 
+      contentContainerStyle={{marginBottom:120}}
+      contentInset={{bottom:120}}
+    style={{ backgroundColor: 'white',height:height+120,paddingBottom:120 }}> 
+      <View style={{marginTop:120}}/> 
            <View style={{flexDirection:'row',marginTop:10}}>
 				<Text style={{color:'black',marginLeft:20,marginRight:0,fontWeight:'light',fontSize:40,marginTop:10}} >Booking</Text>
 				<Text style={{color:'black',marginLeft:10,marginRight:50,fontWeight:'bold',fontSize:40,marginTop:10}} >Summary</Text>
 				</View>
            <View style={{marginTop:32}}/> 
-           <Text style={{marginTop:2,marginLeft:20,fontWeight:'bold'}} category='h6'>Journey Details</Text> 
+           <Text style={{marginTop:2,marginLeft:20,fontWeight:'bold'}} category='h6'>Shippers Details</Text> 
+           <Input placeholder='Set your name'
+           value={shipperName}
+           onChange={(e)=> setShipperName(e.nativeEvent.text)}
+           style={{flex:1,marginTop:20,marginLeft:20,marginRight:20}}
+           textStyle={{color:'black'}}
+           />
+           <Input placeholder='Mobile'
+           keyboardType='numeric'
+           value={shipperMobile}
+           onChange={(e)=> setShipperMobile(e.nativeEvent.text)}
+           style={{flex:1,marginTop:2,marginLeft:20,marginRight:20}}
+           textStyle={{color:'black'}}
+           />
+           <View style={{marginBottom:32}}/> 
+           <Text style={{marginTop:2,marginLeft:20,fontWeight:'bold'}} category='h6'>Payment Option</Text>
+           <View style={{marginBottom:15}}/> 
+           {displayRadioList()}
+           <View style={{marginBottom:32}}/> 
+           <Text style={{marginTop:2,marginLeft:20,fontWeight:'bold'}} category='h6'>Journey Details</Text>  
            {displayItems(items.userTrips)}
            {mapTrips(items.userTrips)}
-           <Text style={{marginTop:2,marginLeft:20,fontWeight:'bold'}} category='h6'>Transportation</Text>
+           <Text style={{marginTop:2,marginLeft:20,fontWeight:'bold'}} category='h6'>Selected Vehicle</Text>
            {displayVehicleType(items.getSelectedVehicle())}
            {/* {displayFooter(items.getSelectedVehicle())} */}
+           
            <ActivityIndicator  style={{display:status ? "flex":"none"}} size="small" color="#0000ff" />
       {/* <View style={{opacity:initialPrice === 0 ? 0.7:status ? 0.7 : 1}}>
        <Button  status="basic" 
@@ -452,6 +655,7 @@ try {
       <Text style={{ color: 'white', fontWeight: 'bold' }}>{status ?"Processing..." : "Place Order"}</Text>
     </Button>
     </View> */}
+    <View style={{marginBottom:100}}/> 
     </ScrollView>
 }
 </BookingContext.Consumer>
@@ -472,7 +676,7 @@ try {
 {true?  displayTeamItems() : fullLoader()}
 <View style={{opacity:initialPrice === 0 ? 0.7:status ? 0.7 : 1}}>
        <Button  status="primary" 
-       disabled={initialPrice === 0 ? true: status} onPress={()=> placeOrder(items)}  
+       disabled={checkButtonValidaity() ? true: status} onPress={()=> placeOrder(items)}  
        style={{ borderRadius: 40, width: width - 40, 
        marginLeft: 20, marginTop: 20,marginBottom:32, backgroundColor:'selectedVehicle' === null ?'#dcdde1' :  'black', 
        borderColor: 'selectedVehicle' === null ? '#dcdde1' : 'black' }}>
@@ -480,7 +684,7 @@ try {
     </Button>
     </View>
 </BottomSheet>
-        <View  style={{ height: 30,width:30, top:60,position:'absolute', alignSelf:'flex-end',left:20,opacity: status? 0.2:1}} >
+        <View  style={{ height: 30,width:30, top:60,position:'absolute', alignSelf:'flex-end',left:20,opacity: status? 0.2:1,backgroundColor:'white',borderRadius:30}} >
           <TouchableOpacity disabled={status} onPress={() => navigation.goBack()}>
             <View style={{width:30,height:30,borderRadius:50/2}}><Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:30,height:30  }}/></View>
             </TouchableOpacity>

@@ -1,4 +1,4 @@
-
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import useCachedResources from './hooks/useCachedResources';
@@ -52,19 +52,19 @@ import { ApplicationProvider, Layout, Text } from '@ui-kitten/components';
       <Text category='h1'>HOME</Text>
     </Layout>
   );
-  
+
   export default () => (
+    
     <SafeAreaProvider>
     <ApplicationProvider {...eva} theme={eva.light}>
        <StoreContext>
       <UserBookingContext>
       <ApplicationProvider {...eva} theme={eva.light} >
-    <Navigation  /> 
+     <Navigation/> 
     </ApplicationProvider>
   </UserBookingContext>
     </StoreContext>
    <StatusBar style="dark"/>
-   
     </ApplicationProvider>
      </SafeAreaProvider>
   );

@@ -20,6 +20,14 @@ import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../typ
 import LinkingConfiguration from './LinkingConfiguration';
 import BottomTabNavigator from './BottomTabNavigator';
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
+
+//   React.useEffect(() => {
+//     return () => {
+//       console.log('oppss app didClosed')
+//         // componentwillunmount in functional component.
+//         // Anything in here is fired on component unmount.
+//     }
+// }, [])
   try{
     
   return (

@@ -54,10 +54,7 @@ export default function App({navigation}) {
   })
   const handleBarCodeScanned = async({ type, data }) => {
     console.log('data scanned',data)
-    // setScanned(true); 
 
-
-    
     var payload = {
       "queryType":"custom",
       "isAPI":true,
@@ -68,10 +65,14 @@ export default function App({navigation}) {
     ]}
     }
     try {
-      // const response = await axiosV2(getCurrentUser().authToken,getCurrentUser().email).post("/store/LoogyPooling", payload);
-      // console.log('resposne',response.data.results[0])
+      let dynamicResult = data
+        if (data.includes("https://tracker.loogy.co/")) {
+        let pureCode = data.replace("https://tracker.loogy.co/", "")
+        dynamicResult = pureCode
+      } 
+
       navigation.goBack()
-      let params = {referneceOrder: { item:data},viewType:"camera"}
+      let params = {referneceOrder: { item:dynamicResult},viewType:"camera"}
       navigation.navigate('LoadDetails',{screen:'LoadDetails',params:params})
     } catch (error) {
       
@@ -96,6 +97,7 @@ export default function App({navigation}) {
   // }
 function validateView(){ 
 const displayQRcode =   <BarCodeScanner
+
 onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
 style={StyleSheet.absoluteFillObject}
 />
@@ -144,12 +146,20 @@ function notice() {
 function renderCamera() {
  return <React.Fragment>
         <StatusBar style={'dark'} />
-       {hasPermission === null || hasPermission === false ?  unValidatedView() :  contentView() }
+        {hasPermission === null || hasPermission === false ?  unValidatedView() :  contentView() }
         <View  style={{ height: 30,width:30, top:50,position:'absolute', alignSelf:'flex-end',left:20}} >
               <TouchableOpacity  onPress={() => navigation.goBack()}>
+                
                 <View style={{width:30,height:30,borderRadius:50/2}}><Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:30,height:30  }}/></View>
                 </TouchableOpacity>
+                
             </View>
+            <View style={{position:'absolute',top:height / 5.5,display:'flex',justifyContent:'center',alignItems:'center',width:width - 20,marginLeft:10,marginRight:10 }}>
+                  <Text style={{color:'white',fontSize:48,fontWeight:'bold'}}>Scan QR Code</Text>
+                  <Text style={{color:'white',fontSize:16}}>Scan the Booking QR Code created by loogy.</Text>
+                  <View style={{width:width - 100 ,height:5,marginTop:50 ,backgroundColor:'#4834d4'}}/>
+                  <View style={{width:width - 100 ,height:5,marginTop:height / 2.5 ,backgroundColor:'#4834d4'}}/>
+                  </View>        
  </React.Fragment>
   
 }

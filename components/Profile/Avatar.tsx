@@ -8,32 +8,26 @@ export default function AvatarCTA({ profileName, profileEmail, profileAvatar,hid
   const iosMessage = 'https://www.budgetpcupgraderepair.com/wp-content/uploads/2019/08/SMS-Icon-01.png'
   const androidMessage = 'https://www.pngkey.com/png/detail/334-3340440_sms-android-messages-app-icon.png'
   const telephoneIcon = 'https://icons-for-free.com/download-icon-contact+mobile+phone+telephone+icon-1320168260690280424_512.png'
-  console.log('props.hideContact',hideContact)
+ 
   const openSMS = () => {
     const operator = Platform.OS === 'android' ? '?' : '&'
-    console.log('profileEmail',profileEmail)
     Linking.openURL(`sms:${+profileEmail}${operator}body=Hi ${profileName}! Kumusta po.`);
   }
-
   const openCall = () => {
     const operator = Platform.OS === 'android' ? '?' : '&'
     console.log('profileEmail',operator)
     Linking.openURL(`tel:${+profileEmail}`);
   }
 const displayDateJoined =()=>{
-  console.log('dateJoined XXXXX,',dateJoined)
   if (dateJoined === undefined) {
     return moment(new Date(),'MMMM DDD YYYY').toDate().toDateString()
   }
   try {
-    // 2022-05-31T05:07:05.533347+00:00
       var date =  moment(dateJoined,'YYYY-MM-DD').format('MMMM Do YYYY').toString()
-      console.log('date',date)
       return date
   } catch (error) {
-    return moment(new Date(),'MMMM DDD YYYY').toDate().toDateString()
+    return ''
 
-    console.log('ERROR date',error)
   }
 }
   return (<View >
@@ -59,7 +53,7 @@ const displayDateJoined =()=>{
               alignItems: 'center',
               marginBottom: 10, marginLeft: 20
             }}
-          ><Text category="c1">Date Created {displayDateJoined()}</Text>
+          ><Text category="c1" style={{fontSize:11}}>Date Created: {displayDateJoined()}</Text>
           </View>
      
           <View style={{ flexDirection: 'row',opacity: hideContact ? 0 : 10 }}>

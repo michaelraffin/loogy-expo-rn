@@ -5,6 +5,17 @@ export const url =  "https://loogyapi.digital"  //  "http://192.168.1.148:9091" 
 export const urlFirebase =  "http://192.53.114.35:8080" // "https://www.smestoreph.com"  //
 export const urlSupBase = "https://www.smestoreph.com"  // "http://192.168.1.148:3001" // 
 export const mapBoxUrl = "https://api.mapbox.com/geocoding/v5/mapbox.places/" 
+ 
+export const axiosV2Local = (token,id)=>  Axios.create({
+    baseURL:'http://192.168.1.148:9091',
+    timeOut:3000,
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        "userID":id
+    }
+});
+
 export const axios = Axios.create({
     baseURL:url,
     timeOut:3000,
@@ -22,6 +33,7 @@ export const axiosV2 = (token,id)=>  Axios.create({
         "userID":id
     }
 });
+ 
 export const productStats = Axios.create({
     baseURL:urlFirebase,
     timeOut:3000,

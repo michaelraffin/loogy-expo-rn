@@ -4,6 +4,7 @@ export const BookingContext = React.createContext({
   selectedMap: 'test',  
   userAccount:null,
   isLoggedIn:false,
+  availableUsers:[],
   didTapped : (e)=>{
     console.log('welcome to ',e)
   }
@@ -14,16 +15,21 @@ function StoreContext({ children}) {
   const [loadType, setLoad] = useState('')
   const [userAccount, setUserAccount] = useState({user:null,data:null,driverDetails:{warehouse:null}})
   const [driverDetails, setDriverInfo] = useState(null)
+  const [orderType, setServiceType] = useState('Public') // Bidding / Private/ Public
   const [vehicle, setUserVehicle] = useState({place_name:'',journey:[]})
   const  [showOnboarding, setOnboarding] = useState(true)
   const  [typeOfView, setTypeOfView] = useState('LOGIN')  // WELCOME || LOGIN || PROFILE || MAIN-APP || FORCE-UPDATE
   const  [userCurrentLocation, setCurrentLocation] = useState(null)  // WELCOME || LOGIN || PROFILE || MAIN-APP
+  const  [availableUsers, setAvailableUsers] = useState([])  // WELCOME || LOGIN || PROFILE || MAIN-APP
 
+
+  
   useEffect(()=>{
     //This should not be here
     
     getEntry('showOnboarding').then(item=>{
       console.log('async get entry',item )
+      console.log('user location by context',userCurrentLocation)
     })
 
     try {
@@ -152,6 +158,9 @@ function StoreContext({ children}) {
       
   }
   
+  function setOrderTypeAction(e){ 
+    setServiceType(e)
+  }
   function getUpdateState(){
     return  userTrips 
   }
@@ -178,9 +187,18 @@ function StoreContext({ children}) {
     
   }
   const getCurrentUserLocation = ()=> { 
+    console.log('User Context Location  ',userCurrentLocation)
     return  userCurrentLocation
   }
+  const getAllAvailableUsers = ()=> { 
+    return  availableUsers
+  }
   
+  const setAvailableUsersNearby = (e)=>{ 
+    setAvailableUsers(e)
+    console.log('welcome to context',availableUsers.length)
+  }
+    
   async function showOnboardingUser(){
     try {
        getEntry('showOnboarding').then(status => {
@@ -191,7 +209,7 @@ function StoreContext({ children}) {
     }
     
   }
-  const values = {isBackload,setBackload,setUserByEmailAccountContext,setLoginByAuthService,setLocation,getCurrentUserLocation,typeOfView,setTypeOfView,setOnboardingMethod,showOnboardingUser,showOnboarding,driverDetails,userTrips,getUpdateState,setTrips,setSelectedVehicle,setUserVehicle,didTapped,getSelectedVehicle,setUserAccountContext,getCurrentUser,setLoginByEmailService,loadType,userAccount,setDriverDetails}
+  const values = {setOrderTypeAction,getAllAvailableUsers,setAvailableUsersNearby,availableUsers,getCurrentUserLocation,isBackload,setBackload,setUserByEmailAccountContext,setLoginByAuthService,setLocation,getCurrentUserLocation,typeOfView,setTypeOfView,setOnboardingMethod,showOnboardingUser,showOnboarding,driverDetails,userTrips,getUpdateState,setTrips,setSelectedVehicle,setUserVehicle,didTapped,getSelectedVehicle,setUserAccountContext,getCurrentUser,setLoginByEmailService,loadType,userAccount,setDriverDetails}
   return (
     <BookingContext.Provider value={values}>
       {children}</BookingContext.Provider>

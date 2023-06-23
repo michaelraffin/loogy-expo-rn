@@ -27,6 +27,7 @@ import { axios } from '../../components/Utils/ServiceCall';
 import { useIsFocused } from '@react-navigation/native';
 import { setStatusBarBackgroundColor } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
+
 const appVersion = 1
 export default  function BookingSummary({ route, navigation }){
 

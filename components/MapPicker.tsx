@@ -11,6 +11,7 @@ import {
   Alert,
   Linking
 } from "react-native"; 
+import {productStats} from '../components/Utils/ServiceCall'
 import { View } from "../components/Themed"; 
 import {
   Input,
@@ -28,6 +29,7 @@ import {
   ApplicationProvider,
   IndexPath, Select, SelectItem
 } from "@ui-kitten/components"; 
+import  moment from 'moment'
 import * as eva from "@eva-design/eva"; 
 import * as Permissions from "expo-permissions";
 import MapView, { Marker,PROVIDER_GOOGLE } from "react-native-maps";
@@ -99,6 +101,18 @@ const settingsLinker = ()=> (
   Linking.openURL('app-settings://notification/com.raffin0000.Nidz')
 )
 
+
+
+async function recordProductStats(e) {
+  try {
+      const data = {storeOwner:"Loogy",cType:"SearchedLocation",cName:"iOS","data":e,"date":new Date()}
+      const response = await productStats.put('/Items', data) 
+      return  response
+  } catch (error) {
+    console.log('error in async record firebase')
+  }
+}
+
   useEffect(() => {
    try {
     setTimeout(() => {
@@ -107,7 +121,7 @@ const settingsLinker = ()=> (
         if (status == "granted") { 
       
          navigator.geolocation.getCurrentPosition(coords => {
-          console.log(coords.coords);
+          console.log("user location",coords.coords);
           setCoordinates(coords.coords);
           setMarker(coords.coords);
           didPrompt(true);
@@ -117,7 +131,8 @@ const settingsLinker = ()=> (
           asAgain().then ( (status) => {
               if (status === "granted") {
                 navigator.geolocation.getCurrentPosition(coords => {
-                  console.log(coords.coords);
+                  console.log("user location",coords.coords);
+                console.log(moment(Date(),'MMMM DDD YYYY, h:mm:ss A').toString())
                   setCoordinates(coords.coords);
                   setMarker(coords.coords);
                   didPrompt(true);

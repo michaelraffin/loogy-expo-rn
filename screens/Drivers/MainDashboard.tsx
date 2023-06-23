@@ -30,7 +30,6 @@ import moment from 'moment';
 import * as Permissions from 'expo-permissions';
 import * as Location from 'expo-location';
 import UserLocationUI from '../../components/Utils/UserLocation'
-import {CityEmit} from '../../components/Utils/InitializeSocket'
 import { CheckMark, SmallArrow } from '../../components/Svgs';
 import { schedulePushNotification } from '../Cart/Notification';
 import {Small,BigLoader,ButtonLoader,InstagramContent,ButtonLoaderStandard} from '../../components/Loader';
@@ -149,6 +148,8 @@ const toastConfig = {
 
 
 	useEffect(() => {
+
+	
 		if (getCurrentUser().id != null) {
 			try {
 				fetchProduct(getCurrentUser().id,'user-id').then(item =>{ 
@@ -1198,13 +1199,6 @@ let socketListerner = React.useMemo(()=> {
             cancelable: false,
           })
 	}
-	const getCurrentUserType = (userProfile)=>{
-		try {
-			return userProfile.user_details.applicantType
-		} catch (error) {
-			return "Shipper"
-		}
-	}
 	const loadCategory = React.useMemo(()=> { 
 		var allowedItems = appNavigations
 		var list = []
@@ -1236,7 +1230,7 @@ let socketListerner = React.useMemo(()=> {
 		// 			</TouchableOpacity>)
 		appNavigations.map((data, index) => {
 			if (data.status) {
-					if (data.id === 1 && getCurrentUserType(getCurrentUser()) === "Driver") {
+					if (data.id === 1) {
 						list.push(	<TouchableOpacity   onPress={() =>   discoverBooking(selectedCity,tripType) }>
 						<View
 							style={{
@@ -1354,7 +1348,7 @@ let socketListerner = React.useMemo(()=> {
 		)
 		
 		return(
-			<ScrollView horizontal={true} style={{height:90,paddingLeft:Platform.OS === 'android' ? 10 : -20,showsHorizontalScrollIndicator:false}}  showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false}>
+			<ScrollView horizontal={true} style={{height:90,paddingLeft:Platform.OS === 'android' ? 10 : 20,showsHorizontalScrollIndicator:false}}  showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false}>
 			<View
 						
 						style={{
@@ -1590,19 +1584,6 @@ let socketListerner = React.useMemo(()=> {
 	</TouchableOpacity>
 		)
 	}
-	const userType =()=> {
-		try {
-		  if (getCurrentUser().user_details.applicantType === "Shipper") {
-			return 0
-		  } else {
-			return  1
-		  }
-		} catch (error) {
-		  return 1
-		}
-	  }
-
-
 	const displayHeaderItem = (section)=>{
 		try { 
 		if (status) {
@@ -1659,7 +1640,7 @@ let socketListerner = React.useMemo(()=> {
 			<View style={{marginBottom:20,marginTop:40,marginLeft:20,alignContent:'center',alignItems:'center'}}>
 			<Image  source={{ uri: 'https://cdni.iconscout.com/illustration/premium/thumb/empty-state-concept-3428212-2902554.png'}} style={{ width:'100%',height:300}}/>
 			<Text category="p1" style={{marginTop:20,marginBottom:40}}>Welcome! to start create your own load</Text>
-			<Button onPress={()=>navigation.navigate('Home', { screen: 'Service' })} style={{ borderRadius: 40, width: width - 40, marginRight:20, marginTop: 20,marginBottom:32, backgroundColor:'#3742fa', borderColor: '#3742fa' }}>{userType() === 0 ?'Ship your cargo now' :'Create your load' }</Button>
+			<Button onPress={()=>navigation.navigate('Home', { screen: 'Service' })} style={{ borderRadius: 40, width: width - 40, marginRight:20, marginTop: 20,marginBottom:32, backgroundColor:'black', borderColor: 'black' }}>Create your load</Button>
  			{/* <Button  status="basic"    onPress={()=> navigation.navigate('Load', { screen: 'Service' })}    style={{ borderRadius: 40, width: width - 40, marginLeft: 20, marginTop: 20,marginBottom:32, backgroundColor:'white', borderColor: 'white' }}>
      	 <Text style={{ color: 'black', fontWeight: 'bold' }}>Create load first load</Text>
 		</Button> */}
@@ -1851,17 +1832,14 @@ let socketListerner = React.useMemo(()=> {
 		<View style={{width:'auto',height:'auto',borderRadius:20}}>
 		{showProfileIconContent()}
 		</View>
-		<UserLocationUI errorMessage={'To get accurate loads, allow Loogy to access your location'}/>
 		<View style={{width:'auto',height:'auto',borderRadius:40}}>
 		<View style={{flexDirection:'row',alignContent:'center',alignItems:'center',justifyContent:'center'}}>
-		{getCurrentUserType() === 0 ? null: <>{searchIconContent()}</>}
-		{/* {rightContent()}
-		{searchIconContent()} */}
+		{rightContent()}
+		{searchIconContent()}
 		</View>
 		</View>
 		</View>
-		{/* {getCurrentUserType() === 0 ? <UserLocationUI errorMessage={'To get accurate loads, allow Loogy to access your location'}/>: 	null } */}
-
+	<UserLocationUI errorMessage={'To get accurate loads, allow Loogy to access your location'}/>
 	</View>
 	}
 	
@@ -1988,10 +1966,10 @@ let socketListerner = React.useMemo(()=> {
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84, 
-    elevation: 5,backgroundColor:'black',borderColor:'black',bottom:80,position:'absolute',right:20,height:60,width:60,borderRadius:50}} size='tiny'>
-	   <Text style={{fontSize:11,color:'white'}}>+ NEW</Text>
+    elevation: 5,backgroundColor:'black',borderColor:'black',bottom:80,position:'absolute',right:20,height:50,width:50,borderRadius:25}} size='tiny'>
+	   <Text style={{fontSize:30,color:'white'}}>+</Text>
          </Button>}
-			{isSheetDisplay ? null :  <FloatingBar index={0} navigation={navigation} showAccount={true} userProfile={getCurrentUser()}/> }
+			{isSheetDisplay ? null :  <FloatingBar index={0} navigation={navigation} showAccount={true}/> }
 			{isSheetDisplay ? <BottomSheet
 				ref={bottomSheetRef}
 				index={0}
@@ -2092,13 +2070,7 @@ try {
 	return ''
 }
 	}
-	const initUser = ()=>{
-		// try {
-		// 		return  <CityEmit/>
-		// } catch (error) {
-		// 	return null
-		// }
-	}
+
 	const validateSectionPressed = (index,indexData)=>{
 		// if(category === 'byTeam'){
 			// navigation.navigate('Load', { screen: 'TeamList' ,params: { contextData:  indexData}})
@@ -2107,7 +2079,7 @@ try {
 			navigation.navigate('Home', { screen: 'Service' })
 		// }
 	}
-  return <React.Fragment><StatusBar barStyle={'white'}/>{content()}{initUser()}</React.Fragment>
+  return <React.Fragment><StatusBar barStyle={'white'}/>{content()}</React.Fragment>
 }
 
 const styles = StyleSheet.create({

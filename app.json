@@ -13,7 +13,7 @@
     "name": "Loogy",
     "description": "Loogy is a management tracking tool for shipper and carrier",
     "slug": "loogy",
-    "version": "1.0.2",
+    "version": "1.0.24",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "loogy",
@@ -34,11 +34,14 @@
       "bundleIdentifier": "com.raffin0000.loogy",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Loogy application requires camera permission to record your sound. Allow Loogy to use it?",
-        "NSCameraUsageDescription": "Loogy application requires camera permission to record your video message. Allow Loogy to use it?",
+        "NSCameraUsageDescription": "Loogy application requires camera permission to scan hauling details. Allow Loogy to use it?",
         "NSPhotoLibraryUsageDescription": "Loogy application requires access to your photos, allowing you to upload a proof of payment.",
         "NSLocationUsageDescription": "Loogy application requires access to your location, allowing you to to track or trace users location",
         "NSLocationWhenInUseUsageDescription": "Loogy application requires access to your location, allowing you to to track or trace users location",
         "NSLocationAlwaysUsageDescription": "Loogy application requires access to your location, allowing you to to track or trace users location"
+      },
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
       },
       "associatedDomains": [
         "applinks:app.loogy.co",
@@ -46,7 +49,7 @@
       ]
     },
     "android": {
-      "versionCode": 90,
+      "versionCode": 105 ,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyD8cWcQd3tnRSp4oMC6izU4rd8WiNiNpjY"

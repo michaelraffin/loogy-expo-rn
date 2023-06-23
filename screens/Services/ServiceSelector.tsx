@@ -24,14 +24,39 @@ var height = Dimensions.get('window').height;
 export default function Cart({ navigation ,route}) { 
     const [selectedVehicle, setVehicle] = useState(null)
     // const {setUserVehicle} = useContext(BookingContext);
-    const [status, setStatus] = useState(true)
+    const [status, setStatus] = useState(false)
     const {getCurrentUser,getCurrentUserLocation,driverDetails} = useContext(BookingContext);
-    const {setTrips,setUserVehicle,didTapped} = useContext(BookingContext);
-    const [vehicles, setVehicleList] = useState([]); 
+    const {setTrips,setUserVehicle,didTapped,setOrderTypeAction} = useContext(BookingContext);
+    const [vehicles, setVehicleList] = useState([
+        {
+            "description": "Allow others to bid and accept it privately.",
+            "id": 0,
+            "imageUrl": "https://cdn3d.iconscout.com/3d/premium/thumb/bidding-date-5886191-4897678.png",
+            "name": "Bid (Coming Soon)",
+            "priceRange": 12000,
+            status:false
+        },
+        {
+            "description": "Only you can and your team can view this load.",
+            "id": 1,
+            "imageUrl": "https://cdn3d.iconscout.com/3d/premium/thumb/private-6760415-5558254.png?f=webp",
+            "name": "Only me / Private",
+            "priceRange": 12000,
+            status:false
+        },
+        {
+            "description": "Allow others to get.",
+            "id": 21,
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR9G4Bzc5HeZASH69M70ABpdL8ZzsAmDOGLqDgIUcTw_i00sBl6FSguZRm1MbyxmkFGYqc&usqp=CAU",
+            "name": "Public",
+            "priceRange": 13000,
+            status:true
+        }
+    ]); 
     useEffect(() => {
       fetchProduct().then(item=>{
         setStatus(false)
-        setVehicleList(item.results[0].serviceList)
+        // setVehicleList(item.results[0].serviceList)
         console.log('itemitemitem',item.results[0].serviceList)
       })
       },[])
@@ -69,8 +94,8 @@ export default function Cart({ navigation ,route}) {
           return (
             (<View style={{backgroundColor:'white',marginTop:40}}>
             <View style={{flexDirection:'row',marginTop:60}}>
-				<Text style={{color:'black',marginLeft:20,marginRight:0,fontWeight:'bold',fontSize:40,marginTop:10}} >Select</Text>
-				<Text style={{color:'black',marginLeft:10,marginRight:50,fontWeight:'light',fontSize:40,marginTop:10}} >Vehicle</Text>
+				<Text style={{color:'black',marginLeft:20,marginRight:0,fontWeight:'bold',fontSize:40,marginTop:10}} >Set</Text>
+				<Text style={{color:'black',marginLeft:10,marginRight:50,fontWeight:'light',fontSize:40,marginTop:10}} >Order Type</Text>
 				</View>
          </View>
      )
@@ -80,13 +105,18 @@ export default function Cart({ navigation ,route}) {
 
       
       const setMyVehicle=(e)=>{
+        try {
+            
         setVehicle(e.id)
-        didTapped(e)
+        setOrderTypeAction(e)
+        } catch (error) {
+            alert('error ')
+        }
         // console.log()
         // setUserVehicle(e)
       }
       const didPressed =()=>{
-        navigation.navigate('Load',{screen:'ServiceSelector'}) 
+        navigation.navigate('Load',{screen:'BookingSummary'})
         // navigation.navigate('Shop', { screen: 'BookingSummary' }); 
     }
 function currencyFormat(num) {
@@ -130,7 +160,7 @@ style={{
   opacity:status? 0.5 : 1,
     backgroundColor:'white',
     marginTop:0,
-    marginBottom:selectedVehicle === null ? 0 : 80
+    marginBottom:selectedVehicle === null ? 0 : 0
     
   }}
 keyboardDismissMode="on-drag"
@@ -148,9 +178,10 @@ ListEmptyComponent={()=>{
   }}
   renderItem={(item) =>{
     var data = item.item
+
     return(
         <TouchableOpacity
-        disabled={status}
+        disabled={data.status ?  status : true}
         onPress={()=> setMyVehicle(data) }
         >
         <View style={{
@@ -158,20 +189,10 @@ ListEmptyComponent={()=>{
               height:'auto',
               borderRadius:20,
               margin:20,
+              opacity: data.status ? 1:0.2,
               borderWidth:data.id === selectedVehicle ? 1.5:0
-            //   ,opacity:data.id === selectedVehicle ? 1:0.4
-          }}>
-              {/* {data.id === selectedVehicle ? <View style={{width:100,
-            alignItems:'center',
-            justifyContent:'center'}}>
-            
-            <Text style={{marginLeft:20,marginTop:10,fontWeight:'700'}} category='c1' >Price start  {currencyFormat(data.priceRange)}</Text>
-              </View>  : null }   
-               */}
-
-
-              {/* <View style={{backgroundColor:'red'}}><Text style={{fontWeight:'bold',borderRadius:20,margin:2,padding:2,color:'white',position:'absolute',top:10,backgroundColor:'#e74c3c'}} category='c2'  >Promo</Text></View> */}
-              <View style={{width:100,
+         
+          }}><View style={{width:100,
             alignItems:'center',
             justifyContent:'center'}}>
             

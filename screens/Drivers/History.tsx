@@ -230,6 +230,10 @@ async function modifyLoad(e,modifyStatus) {
     }
    
   }
+  const navigateToLoadDetails =(data)=>{
+    navigation.navigate('LoadDetails', { screen: 'LoadDetails',params: { referneceOrder: data,type:'readOnly' ,viewType:"dashboard"} } )
+    // navigation.navigate('LoadDetails', { screen: 'LoadDetails',referneceOrder: { item:data},viewType:"dashboard" })
+  }
   const inProgressContent =(data,index)=>{
  
     return   <TouchableOpacity disabled={status} onPress={()=>modifyThisLoad(data,completed)}   activeOpacity={1}>
@@ -237,7 +241,11 @@ async function modifyLoad(e,modifyStatus) {
   <CardJourney 
    journey={data.item.trips[0]}
     details={data.item} 
-    didView={()=>navigation.navigate('LoadDetails', { screen: 'LoadDetails',params: { referneceOrder: data,type:'readOnly' } } )}
+    didView={()=>
+      navigateToLoadDetails(data)
+      // navigation.navigate('LoadDetails', { screen: 'LoadDetails',params: { referneceOrder: data,type:'readOnly' } ,viewType:"dashboard"} )
+      // navigation.navigate('LoadDetails', { screen: 'LoadDetails',referneceOrder: { item:data},viewType:"dashboard" })
+    }
     badgeStyle={{ width: 30, height: 30, borderRadius: 15 ,backgroundColor:'#f5f6fa',justifyContent:'center',alignContent:'center',alignItems:'center'}}/>
       <View style={{marginLeft:20,marginRight:20,marginBottom:20}}>
       {/* <Text category="h5" style={{fontWeight:'bold'}}>Your about to pickup</Text>
@@ -282,7 +290,10 @@ const journeyContennt =(data,index)=>{
    <CardJourney 
    journey={data.item.trips[0]}
     details={data.item} 
-    didView={()=>navigation.navigate('LoadDetails', { screen: 'LoadDetails',params: { referneceOrder: data,type:'readOnly' } } )}
+    didView={()=>
+      navigateToLoadDetails(data)
+      // navigation.navigate('LoadDetails', { screen: 'LoadDetails',params: { referneceOrder: data,type:'readOnly' } } )
+    }
     badgeStyle={{ width: 30, height: 30, borderRadius: 15 ,backgroundColor:'#f5f6fa',justifyContent:'center',alignContent:'center',alignItems:'center'}}/>
   {category ==='On-Scheduled' ? startContent(data) : null}
   </View>
@@ -447,11 +458,25 @@ return (
        </TouchableOpacity>
        )
  }
+ const userType =()=> {
+  try {
+    if (getCurrentUser().user_details.applicantType === "Shipper") {
+      return 0
+    } else {
+      return  1
+    }
+  } catch (error) {
+    return 1
+  }
+  // 0 == Customer
+  // 1 == Driver
+
+}
 const HeaderContent =()=>{
    return <View style={{width:width,height:'auto',backgroundColor:'white'}}>
        <View style={{flexDirection:'row',marginTop:60}}>
 				<Text style={{color:'black',marginLeft:20,marginRight:0,fontWeight:'light',fontSize:40,marginTop:10}} >Your</Text>
-				<Text style={{color:'black',marginLeft:10,marginRight:50,fontWeight:'bold',fontSize:40,marginTop:10}} >Task</Text>
+				<Text style={{color:'black',marginLeft:10,marginRight:50,fontWeight:'bold',fontSize:40,marginTop:10}} >{userType() === 0 ? 'Transactions': 'Task' }</Text>
 				</View>
         <UserLocationUI errorMessage={"For tracking drivers location, allow Loogy to access your location"}/>
    </View>
@@ -537,7 +562,7 @@ return  <React.Fragment>
       source={{ uri: 'https://theflowerluxecebu.com/' }}
     /> */}
   <View style={{backgroundColor:'white',height:height}}>{content()}</View>
-  <FloatingBar showAccount={true} index={2} navigation={navigation}/>
+  <FloatingBar index={2} navigation={navigation} showAccount={true} userProfile={getCurrentUser()}/> 
 </SafeAreaProvider>
   </React.Fragment>
 }

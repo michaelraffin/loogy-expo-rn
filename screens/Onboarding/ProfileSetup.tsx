@@ -70,6 +70,11 @@ export default function SuccessPayment({ route, navigation }) {
     hideConfetti()
   },[isLoading])
 
+
+  useEffect(() => { 
+    setLogisticName('')
+  },[applicationType])
+  
   const isFromGoogleFacebook = () =>{
     try {
       if (driverDetails != undefined && driverDetails.app_metadata.provider === 'google' || driverDetails.app_metadata.provider === 'facebook') {
@@ -118,9 +123,9 @@ export default function SuccessPayment({ route, navigation }) {
           <Divider style={{marginTop:20}}/>
           <View style={{marginLeft:20}}>
           <Text category="h6" style={{ marginTop: 20,marginBottom:20,  fontWeight: 'bold' }}>Application Type</Text>
-          <TouchableOpacity disabled={true}  onPress={()=>setApplicatioNType('Organizer')}><View style={{backgroundColor: applicationType  != 'Organizer' ? '#bdc3c7' : 'black',borderRadius:40,height: 45,width:140,alignContent:'center',justifyContent:'center',alignItems:'center'}}><Text style={{color:'white'}}>Apply as Organizer</Text></View></TouchableOpacity>
-          <TouchableOpacity disabled={true}  onPress={()=>setApplicatioNType('Shipper')}><View style={{backgroundColor: applicationType  != 'Shipper' ? '#bdc3c7' : 'black',borderRadius:40,height: 45,width:140,alignContent:'center',justifyContent:'center',alignItems:'center',marginTop:20}}><Text style={{color:'white'}}>Apply as Shipper</Text></View></TouchableOpacity>
-          <TouchableOpacity disabled={isLoading}   onPress={()=>setApplicatioNType('Driver')}><View style={{backgroundColor:applicationType  != 'Driver' ? '#bdc3c7' : 'black',borderRadius:40,height: 45,width:120,alignContent:'center',justifyContent:'center',alignItems:'center',marginTop:20}}><Text style={{color:'white'}}>Apply as Driver</Text></View></TouchableOpacity>
+          {/* <TouchableOpacity disabled={false}  onPress={()=>setApplicatioNType('Organizer')}><View style={{backgroundColor: applicationType  != 'Organizer' ? '#bdc3c7' : 'black',borderRadius:40,height: 45,width:200,alignContent:'center',justifyContent:'center',alignItems:'center'}}><Text style={{color:'white'}}>Apply as Brooker/Shipper</Text></View></TouchableOpacity> */}
+          <TouchableOpacity disabled={false}  onPress={()=>setApplicatioNType('Shipper')}><View style={{backgroundColor: applicationType  != 'Shipper' ? '#bdc3c7' : 'black',borderRadius:40,height: 45,width:200,alignContent:'center',justifyContent:'center',alignItems:'center',marginTop:20}}><Text style={{color:'white'}}>Apply as Shipper/Brooker</Text></View></TouchableOpacity>
+          <TouchableOpacity disabled={isLoading}   onPress={()=>setApplicatioNType('Driver')}><View style={{backgroundColor:applicationType  != 'Driver' ? '#bdc3c7' : 'black',borderRadius:40,height: 45,width:130,alignContent:'center',justifyContent:'center',alignItems:'center',marginTop:20}}><Text style={{color:'white'}}>Apply as Driver</Text></View></TouchableOpacity>
         <Layout style={{marginTop:20,borderRadius:5,backgroundColor:'white'}} level="1" >
         <View status='basic' style={{margin:20}}>
         <Text    category="c1" style={{fontWeight:'bold',color:'#6ab04c'}}  >
@@ -220,8 +225,12 @@ export default function SuccessPayment({ route, navigation }) {
   }
 
   const isSatisfy = ()=>{
-    if (logisticName.length >= 3 && membersName.length >= 3  && mobile.length >= 9) {
-      return true
+    if ( membersName.length >= 3  && mobile.length >= 9) {
+      if (logisticName.length <= 9 && applicationType === 'Driver') {
+        return false
+      } else {
+        return true
+      }
     }
     return false
   }
@@ -274,6 +283,7 @@ disabled={true}
         placeholder="jaun@delacruz.com"
       onChange={(e) => setUserEmail(e.nativeEvent.text)}
     /> */}
+
       <Input
         value={mobile}
         label="Contact Mobile Number"
@@ -286,10 +296,12 @@ disabled={true}
     {items =>
     customerAddress(items)
   }</MapContext.Consumer> */}
+  
       <Input
         value={logisticName}
         label="Logistic Name"
-        style={{ marginTop: 10, marginLeft: 20, marginRight: 20 }}
+          disabled={applicationType != 'Driver' ?true : false}
+        style={{ marginTop: 10, marginLeft: 20, marginRight: 20,opacity: applicationType != 'Driver' ? 0.2: 1 }}
         placeholder="Juan Dela Cruz Forwarder"
         onChange={(e) => setLogisticName(e.nativeEvent.text)}
       />

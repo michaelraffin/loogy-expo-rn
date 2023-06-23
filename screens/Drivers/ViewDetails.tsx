@@ -26,11 +26,11 @@ import {MapContext} from '../../components/Context/MapContext'
 import DashedLine from 'react-native-dashed-line'; 
 import {BookingContext} from  '../../components/Context/UserBookingContext'
 import ReactNativeAlgoliaPlaces from 'react-native-algolia-places'
-import {axios,axiosV2} from '../../components/Utils/ServiceCall'
+import {axios,axiosV2,productStats} from '../../components/Utils/ServiceCall'
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 // import Toast from 'react-native-simple-toast';
-
+import * as Sharing from 'expo-sharing';
 import Toast from 'react-native-toast-message';
 
 import io  from "socket.io-client"
@@ -44,7 +44,7 @@ import {ModifyThisLoad} from '../../components/Utils/UpdateLoad'
 import BottomSheet,{BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import iconSet from '@expo/vector-icons/build/FontAwesome5';  
 import { Small } from '../../components/Loader/Loader';
-
+import { notifyGroup,roomListenerStandard,notifyGroupStatsPayload,initSocket,socketLeaveRoom} from '../../components/Utils/SocketManager';
 // const socket = ws('http://192.168.1.148:9093')
 // exp://192.168.1.148:19000
 
@@ -71,8 +71,10 @@ export default  function fallBackScreen(props,{route}){
   const [category, setCategory] = useState('One-Way');
   const [results, setResult] = useState('One-Way');
   const [status, setStatus] = useState(true);
+  const [mainDataStatus, setMainDataStatus] = useState(true);
   const [userProfile, setUserProfile] = useState({user_details :{applicantType:''}});
   const {referneceOrder,type,viewType} = route.params;
+  // viewType // Dashboard // Camera
   const [haulDetails, setLoadDetails] = useState(null);
   const [currentRoute, setSelectedRoute] = useState(null);
   const [didViewAs, setUserTypeView] = useState(type);
@@ -85,7 +87,7 @@ export default  function fallBackScreen(props,{route}){
   const [sheetIndexRef,setSsheetIndexRef] =  useState(1);
   const [isSheetDisplay,setisSheetDisplay] =  useState(false);
   const [isNavigateContent,setNavigateContent] =  useState(false);
-  const snapPoints = useMemo(() => ['10%','50%',Platform.OS === 'android'  ? '95%' :'35%'], []); 
+  const snapPoints = useMemo(() => Platform.OS === 'android'   ? ['10%','50%','95%'] : ['10%','65%','95%'], []); 
   const completedPoints = useMemo(() => ['75%','76%'],[]); 
   const navigationOptionPoints = useMemo(() => ['10%','20%'], []); 
   let opacity = new Animated.Value(1);
@@ -113,6 +115,7 @@ export default  function fallBackScreen(props,{route}){
       // }) 
     })
   }
+
   const scannedData = async (data)=>{
 
     var payload = {
@@ -126,80 +129,155 @@ export default  function fallBackScreen(props,{route}){
     }
     try {
       const response = await axiosV2(getCurrentUser().authToken,getCurrentUser().email).post("/store/LoogyPooling", payload);
-      console.log('resposne',response.data.results[0])
       let params = {referneceOrder: { item:response.data.results[0]},viewType:"camera"}
-       
+       return  response.data.results[0]
     } catch (error) {
-      
+      return null
     }
   }
   const testSocket = ()=>{
     socket.emit("room_view_details"+referneceOrder, {data:haulDetails,user:userProfile});
   }
 
-  useEffect(() => {   
-    if(isFocused){
-        socket.on("connect", (connectSocket) => {
+  // useEffect(() => {   
+  //   if(isFocused){
+  //       socket.on("connect", (connectSocket) => {
       
-         // Notify Socket 
-        socket.emit('room_view_details',  {data:haulDetails,user:userProfile});
-        // socket.emit('room_view_details-callback',  ({data:haulDetails,user:userProfile},message) =>{
-        //   console.log('callback succesfully joined',message)
-        // });
+  //        // Notify Socket 
+  //       socket.emit('room_view_details',  {data:haulDetails,user:userProfile});
+  //       // socket.emit('room_view_details-callback',  ({data:haulDetails,user:userProfile},message) =>{
+  //       //   console.log('callback succesfully joined',message)
+  //       // });
 
-       // Observed Socket
-        // socket.on(referneceOrder)
-        socket.on("room_view_details", listener);
-      }) 
-      if (haulDetails != null ) {
-        console.log('soccket')
-        // socket.on(haulDetails.item.referenceOrder, listener);
-        socket.on('room_view_details', listener);
-      }
-    }else {
-      socket.disconnect()
-      socket.close()
-    }
+  //      // Observed Socket
+  //       // socket.on(referneceOrder)
+  //       socket.on("room_view_details", listener);
+  //     }) 
+  //     if (haulDetails != null ) {
+  //       console.log('soccket')
+  //       // socket.on(haulDetails.item.referenceOrder, listener);
+  //       socket.on('room_view_details', listener);
+  //     }
+  //   }else {
+  //     socket.disconnect()
+  //     socket.close()
+  //   }
     
-    // socket.on("view_delivery-"+referneceOrder, listener); 
-  },[referneceOrder,userProfile])
+  //   // socket.on("view_delivery-"+referneceOrder, listener); 
+  // },[referneceOrder,userProfile])
 
 
   // useEffect(() => {   
-  //   if (haulDetails != null ) {
-  //     console.log('soccket')
-  //     // socket.on(haulDetails.item.referenceOrder, listener);
-  //     socket.on('room_view_details', listener);
+  //   try {
+  //     // socketListerner()
+  //   } catch (error) {
+  //     alert('error in loadListener',error)
   //   }
-  // },[socket])
+  // },[])
 
 
   useEffect(() => {   
-    
     try {
-      //  console.log('referneceOrder miks',referneceOrder,viewType)
-       if (viewType == 'camera') {
+    
+       if (viewType == 'camera' || viewType == 'webView') {
+        console.log('hailing detail',referneceOrder.item)
+        
         scannedData(referneceOrder.item).then(result =>{ 
-          setLoadDetails({item:result})
-          setDataReady(true)
+          if (result != null ) {
+            
+            setLoadDetails({item:result})
+            
+            setStatus(false)
+            setDataReady(true)
+            setMainDataStatus(false)
+            recordProductStats(result)
+            // initGroupSocket()
+          } else {
+
+            Alert.alert(`Invalid Code`, `The scanned value doesn't match the Loogy Booking Format.`, [ 
+              { text: 'Ok', onPress: () => navigation.goBack() },
+              ],{
+              cancelable: true,
+              })
+       
+          }
+       
         })
-       }else {
+       } else {
         setLoadDetails(referneceOrder)
-      setStatus(false)
-      setDataReady(true)
+        setStatus(false)
+        setDataReady(true)
+        setMainDataStatus(false)
+        initGroupSocket()
        } 
-      
-      getProfileAccount().then(profile=> {
+        getProfileAccount().then(profile=> {
         setUserProfile(profile.data.data[0].user_details)
       })
       Animated.spring(opacityV2,{toValue:1,useNativeDriver:true}).start();
     } catch (error) {
       console.log('error useEffect',error)
+      setLoadDetails(null)
+      // navigation.goBack()
       return alert('errro found in useEffect')  
     }
 
     
 }, [referneceOrder])
+
+
+const initGroupSocket = ()=>{
+  
+  try {
+  
+    let loadStatsWatcher = `load-stats-watcher`
+    notifyGroupStatsPayload(loadStatsWatcher,{type:"stats",payload:referneceOrder.item.referenceOrder}).then(result =>{
+   
+    })
+    socketListerner()
+    initSocket()
+  } catch (error) {
+    console.log('error in socklet listener',error)
+    alert('socket is not working')
+  }
+}
+function socketListerner () { 
+	try {
+
+    let referenceLoadID = referneceOrder.item.referenceOrder
+    let loadwatcherID = `load-watcher-${referneceOrder.item.referenceOrder}`
+		roomListenerStandard(loadwatcherID,(data)=>{
+			console.log('davao-trucking',data)
+				var payload = {
+					title: `Load ${referenceLoadID} update`,
+					body: `Order has been picked  by someone else`
+				};
+				 schedulePushNotification(payload).then(() => {});
+        
+         if (data.payload.state === "didAccept" &&  data.payload.reference === referenceLoadID){
+          navigation.goBack()
+          socketLeaveRoom("room1")
+          
+         }
+		})
+	
+
+	} catch (error) {
+    console.log('error in listener roomListenerStandard',error)
+    alert('listener is not working')
+	}
+ }
+ 
+async function recordProductStats(e) {
+  try {
+      const data = {storeOwner:"Loogy",cType:"visitedProduct",cName:"iOS","data":e,"date":new Date()}
+      const response = await productStats.put('/Items', data) 
+      return  response
+  } catch (error) {
+    console.log('error in async record firebase')
+  }
+}
+
+
 
   const deleteLoad = ()=>{
     console.log(getCurrentUser().authToken,getCurrentUser().id)
@@ -286,14 +364,14 @@ export default  function fallBackScreen(props,{route}){
        content.push(
          <>
          <CardJourney journey={data} referenceOrder={e.referenceOrder}/>
-         <Text category='c1' style={{marginLeft:24}}>Notes</Text>
+         <Text category='c1' style={{marginLeft:24,fontSize:11,}}>Notes</Text>
          <TextInput   
          editable={false}
      multiline
      scrollEnabled={true}
      value={data.shipperNotes}
      numberOfLines={data.shipperNotes === "" ?1 :3 }
-     style={{padding:10,backgroundColor:'#f5f6fa',borderWidth:1,borderColor:'#f5f6fa',borderRadius:5,marginRight:24,marginLeft:24,marginTop:10,marginBottom:20}}
+     style={{fontSize:11,padding:10,backgroundColor:'#f5f6fa',borderWidth:1,borderColor:'#f5f6fa',borderRadius:5,marginRight:24,marginLeft:24,marginTop:10,marginBottom:20}}
      placeholder="No details were added"
   
      maxLength={200}/>
@@ -360,13 +438,13 @@ export default  function fallBackScreen(props,{route}){
     try {
       return (
         <React.Fragment >
-      <View style={{backgroundColor:'white',height:40,marginTop:0}}> 
+      <View style={{backgroundColor:'white',height:40,marginTop:0,marginBottom:60}}> 
             <Layout style={styles.container} level="1">
               <Text style={styles.subTotal} category="h6">
                 Offered Price
               </Text>
               <Text style={styles.subTotalItem} category="c1">
-               {true ? Platform.OS === 'android' ? currencyFormat(Number(haulDetails.item.offeredPrice)) : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(haulDetails.item.offeredPrice)) : '0.00'}
+               {true ? Platform.OS === 'android' ? currencyFormat(Number(isNaN(haulDetails.item.offeredPrice) ? 0:haulDetails.item.offeredPrice )) : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(isNaN(haulDetails.item.offeredPrice) ? 0:haulDetails.item.offeredPrice )) : '0.00'}
               </Text>
             </Layout> 
             </View>
@@ -394,7 +472,7 @@ export default  function fallBackScreen(props,{route}){
             </Layout>  : null}
             {Platform.OS === 'android'  ? calendarStatus ?  displayAndroidCalendar() : null : null}
             </View>
-            {displayDeletContent()}
+         
           </React.Fragment>
       )
     } catch (error) {
@@ -403,7 +481,9 @@ export default  function fallBackScreen(props,{route}){
     }
   } 
   const displayDeletContent =()=>{
+    console.log('haulDetails.item.status',haulDetails.item.status)
     try {
+      
       // haulDetails.item.status === 'In-Transit'
       // haulDetails.item.transactionLogs === undefined ? null :haulDetails.item.status
       // && haulDetails.item.ownerID === userProfile.id
@@ -420,7 +500,47 @@ export default  function fallBackScreen(props,{route}){
         )
       } 
     } catch (error) {
+      console.log('displayDeletContent',haulDetails.item.user)
+    }
+  }
+
+
+    const AsyncLink = async (e) => {
+     Clipboard.setStringAsync('hello world').then( item=>{
+  
+     }
+    
+    )
+
+    // Clipboard.setStringAsync(`https://tracker.loogy.co/${e}`);
+    // return 
+  }
+
+  const copyToClipboard = async () => {
+    Clipboard.setStringAsync("dsadsa")
+    // await Clipboard.setStringAsync('hello world');
+  };
+  const displayLinkContent =()=>{
+    console.log('haulDetails.item.status',haulDetails.item.status)
+    try {
       
+      // haulDetails.item.status === 'In-Transit'
+      // haulDetails.item.transactionLogs === undefined ? null :haulDetails.item.status
+      // && haulDetails.item.ownerID === userProfile.id
+      // && haulDetails.item.userReference === 
+      if (haulDetails.item.status === 'Pending' && haulDetails.item.userReference === getCurrentUser().authToken,getCurrentUser().id ) {
+        return (
+          <View style={{width:width,justifyContent:'center',alignItems:'center',marginTop:20}}>
+          <TouchableOpacity onPress={copyToClipboard}>
+            <View style={{width:width,justifyContent:'center',alignItems:'center',height:60}}>
+          <Text category='c1' style={{color:'#636e72'}}>Copy Link</Text>
+          </View>
+          </TouchableOpacity>
+            </View>
+        )
+      } 
+    } catch (error) {
+      console.log('displayDeletContent',error)
     }
   }
   // display:sheetIndexRef === 2 ? 'flex' : 'none', transition: "all 1s ease-in"
@@ -482,7 +602,7 @@ const mapContentService =()=>{
       latitudeDelta:1,
       latitude: 11.6978352,
      longitude:   122.6217542}}
-      style={{
+      style={{ 
         zIndex:-1,
         width:Dimensions.get("window").width,
         height: height 
@@ -633,24 +753,49 @@ const completedContent =()=>{
     return <View style={{height:200,width:width,backgroundColor:'red'}}/>
   }
 }
+const validateFirstTrip = ()=>{
+  try{
+      let now = new Date()
+      let firstTrip = haulDetails.item.trips[0]
+      console.log('validateFirstTrip',moment(firstTrip.selectedDate).isBefore(now))
+      return moment(now).isBefore(firstTrip.selectedDate)
+
+  } catch(error){
+    
+  }
+  
+}
 const displayTypeOfButton = ()=>{
   var type = haulDetails.item.status
+
+  let lockedButton = (<TouchableOpacity >
+    <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? '#ecf0f1': '#ecf0f1' : '#ecf0f1',alignContent:'center',justifyContent:'center',alignItems:'center',flexDirection:'row'}}>
+    
+       <Text style={{color:'#7f8c8d',fontSize:18}}>Expired Load</Text>
+        
+    </View>
+       </TouchableOpacity>)
   switch (type) {
   case 'Pending':
-      return (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNowService('On-Scheduled')} >
-        <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': 'black' : 'black',alignContent:'center',justifyContent:'center',alignItems:'center'}}>
-           <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Accept Load'}</Text>
-        </View>
-           </TouchableOpacity>)
+    let acceptLoadButton = (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNowService('On-Scheduled')} >
+    <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': 'black' : 'black',alignContent:'center',justifyContent:'center',alignItems:'center'}}>
+       <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Accept Load'}</Text>
+    </View>
+       </TouchableOpacity>)
+      return validateFirstTrip()  ? acceptLoadButton : lockedButton
       break
       case 'On-Scheduled':
-        return (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNowService('In-Transit')} >
-          <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': '#6ab04c' : '#6ab04c',alignContent:'center',justifyContent:'center',alignItems:'center',flexDirection:'row'}}>
-          {/* <Image  source={{uri:'http://cdn.onlinewebfonts.com/svg/img_106572.png'}}  style={{width:18,height:18 ,backgroundColor:'white',borderRadius:18}}/> */}
-             <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Start Loading'}</Text>
-              
-          </View>
-             </TouchableOpacity>)
+        let accepButton = (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNowService('In-Transit')} >
+        <View style={{width:width / 2,height:45,borderRadius:50,opacity:status ? 0.5: 1 ,backgroundColor: checked ? backloadDate  === null ? 'gray': '#6ab04c' : '#6ab04c',alignContent:'center',justifyContent:'center',alignItems:'center',flexDirection:'row'}}>
+        {/* <Image  source={{uri:'http://cdn.onlinewebfonts.com/svg/img_106572.png'}}  style={{width:18,height:18 ,backgroundColor:'white',borderRadius:18}}/> */}
+           <Text style={{color:'white',fontSize:18}}> {status ? 'Loading...':'Start Loading'}</Text>
+            
+        </View>
+           </TouchableOpacity>)
+           
+        return  accepButton  //validateFirstTrip() ? accepButton :  lockedButton 
+
+
       break
       case 'In-Transit':
         return (<TouchableOpacity disabled={checked ? backloadDate  === null ? true :false : false} onPress={()=>updateNowService('Completed')} >
@@ -731,14 +876,14 @@ const locatinTracker = (data)=>{
 const displayTakerAvatarProfile =() =>{
   try {
         var takerProfile = haulDetails.item.transactionLogs[0].taker
-        console.log('takerProfile',haulDetails.item.transactionLogs[0])
+        // console.log('takerProfile',haulDetails.item.transactionLogs[0])
         var name = takerProfile === null ? 'Person is not available' : takerProfile.name 
         var mobile = takerProfile === null ? '0000' : takerProfile.contactNumber 
-        console.log('mobile number here',mobile)
+        // console.log('mobile number here',mobile)
         return   <AvatarProfile contact={'ssss'} profileName={name} profileEmail={ mobile} profileAvatar={'https://media.istockphoto.com/vectors/user-icon-flat-isolated-on-white-background-user-symbol-vector-vector-id1300845620?k=20&m=1300845620&s=612x612&w=0&h=f4XTZDAv7NPuZbG0habSpU0sNgECM0X7nbKzTUta3n8='} />
   }catch(error){
-    console.log(haulDetails.item.transactionLogs)
-    console.log('error avatar profile',error)
+    // console.log(haulDetails.item.transactionLogs)
+    // console.log('error avatar profile',error)
   return <View/>
   }
 }
@@ -789,10 +934,13 @@ const displayTransactionlogs = (logs) => {
 
     },[backloadDate])
   
+const validateUserType =()=>{
+  // haulDetails
+}
 const ProfileContent =()=>{
   try {
     return <View style={{height:'auto',top:5,backgroundColor:'white',marginBottom:20}}>
-    <AvatarProfile   profileName={haulDetails.item.user.user_details.name} profileEmail={haulDetails.item.user.user_details.contactNumber} profileAvatar={haulDetails.item.user.application_info.picture}/>
+    <AvatarProfile   profileName={`${haulDetails.item.shippersName}`} profileEmail={haulDetails.item.shippersMobile} profileAvatar={haulDetails.item.user.application_info.picture}/>
       <View style={{position:'absolute',top:20,right:30,width:'auto',height:150,backgroundColor:'white',alignContent:'center',alignItems:'center'}}>
     <TouchableOpacity onPress={()=>  	navigation.navigate('ViewQRDetails', { screen: 'ViewQRDetails',referenceOrder: { item:haulDetails} }) }>
       <View style={{backgroundColor:'white',alignContent:'center',alignItems:'center'}}>
@@ -802,13 +950,12 @@ const ProfileContent =()=>{
       value={haulDetails.item.referenceOrder}
     />
     </View>
-    <Text category="c1" style={{marginLeft:0,marginTop:8}}>Tap to share details</Text>
+    <Text category="c1" style={{marginLeft:0,marginTop:8}}>Share this  Code</Text>
     </TouchableOpacity>
     </View></View>
   }catch (error) {
     console.log('error rendering profile',error)
     return (<View style={{height:'auto',top:5,backgroundColor:'white',marginBottom:20}}>
-   
     <AvatarProfile  profileName={getDynamicProfile().name} profileEmail={getDynamicProfile().contactNumber} profileAvatar={getDynamicProfile().avatar}/>
       <View style={{position:'absolute',top:20,right:30,width:'auto',height:150,backgroundColor:'white',alignContent:'center',alignItems:'center'}}>
     <TouchableOpacity onPress={()=>  	navigation.navigate('ViewQRDetails', { screen: 'ViewQRDetails',referenceOrder: { item:haulDetails} }) }>
@@ -890,29 +1037,42 @@ const navigationitems =()=>{
       }
       const getDynamicProfile = () =>{
         try {
-          if (getOriginAccount() === "email"){
+          if (haulDetails.item.shippersName != undefined) {
+          
+            return  {name:"shippersName",
+            contactNumber:'contact',
+            avatar:`https://ui-avatars.com/api/?name=${shippersName}?background=red`
+              
+            }
+          } else if (getOriginAccount() === "email"){
             return haulDetails.item.user.application_info
-         }else {
+         } else {
+          console.log('getDynamicProfile',haulDetails)
            return haulDetails.item.user.application_info
          }
         }catch(error){
-          return {name:'Not available',
-          contactNumber:'',
+          console.log('getDynamicProfile ' ,haulDetails)
+          return {name:haulDetails.item.shippersName,
+          contactNumber:haulDetails.item.shippersMobile,
           avatar:'https://localflowershop.sgp1.digitaloceanspaces.com/product/1651903967051-512.png'
           }
           console.log('error',error)
         }
       }
-      
+    
+      const tappedBack =()=>{
+        socketLeaveRoom("room1")
+        navigation.goBack()
+      }
     const content =()=>{
-      if (haulDetails === null){
+      if (haulDetails === null ){
         return <Small/>
       }
-        try {
-          console.log('haulDetails.item',haulDetails.item.user.user_details.contactNumber)
-        return  <React.Fragment>
-          {mapContent()}
-                  {/* { haulDetails.item.status === 'Completed' ? completedContent()  :   mapContent()} */}
+       
+        try { 
+        return  <React.Fragment>        
+          { haulDetails.item.status === 'Completed' ? completedContent()  :   mapContent()}
+          
                   <BottomSheet
               ref={bottomSheetRef}
               index={1}
@@ -920,7 +1080,7 @@ const navigationitems =()=>{
               onChange={handleSheetChanges}
               >{isNavigateContent ?  navigationitems()  :<View style={styles.contentContainer}>
               <View  style={{ height: 30,width:30, top:10,position:'absolute', alignSelf:'flex-end',left:20,opacity:status ? 0.2 : 1}} >
-                <TouchableOpacity onPress={() => navigation.goBack()}>
+                <TouchableOpacity onPress={() => tappedBack()}>
                 <Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:'100%',height:30  }}/>
                 </TouchableOpacity>
               </View>
@@ -931,7 +1091,7 @@ const navigationitems =()=>{
               keyExtractor={i => i}
               renderItem={(item)=>
               <Animated.View style={{opacity:opacityV2}}>
-              {ProfileContent()}
+             {ProfileContent()}
               {haulDetails.isBackload ?<Text style={{marginLeft:20,fontWeight:'bold'}} category='h6'>Backload</Text> : null }
               <View style={{marginTop:20}}/> 
               <View style={{flexDirection:'row',width:width-20,justifyContent:'space-between'}}>
@@ -939,13 +1099,16 @@ const navigationitems =()=>{
               <View style={{ backgroundColor:  'white', marginBottom:20, width: 90, height: 25, borderRadius: 50 / 2, justifyContent: 'center', alignContent: 'center',marginLeft:20,alignItems:'center' }}><Text style={{ marginLeft: 10, marginRight: 20,  color:'#0652DD' ,fontWeight:'bold',width:'auto'}} category='c2' >{haulDetails.item.loadType}</Text></View>
               </View>
               {haulDetails != null ? sheetIndexRef !== 0 ?   displayItems(haulDetails.item) : null  : null }
-              <Text style={{marginTop:40,marginLeft:20,fontWeight:'bold',marginBottom:0}} category='h6'>Transportation</Text>
+       
+              <Text style={{marginTop:40,marginLeft:20,fontWeight:'bold',marginBottom:0}} category='h6'>Selected Vehicle</Text>
               {displayVehicleType(haulDetails.item.selectedVehicle)}
               { haulDetails.item.transactionLogs === undefined ? null:displayTransactionlogs(haulDetails.item.transactionLogs)}
               {displayFooter(haulDetails.item.selectedVehicle)}
+              {/* {sheetIndexRef === 2  ? ProfileContent(): null} */}
               {getLastDateService(haulDetails.item.trips)}
               {calendarStatus ?  displayAndroidCalendar() : null} 
-              
+                {/* {displayLinkContent()} */}
+              {/* {displayDeletContent()} */}
               </Animated.View>
               }
               > 
@@ -954,20 +1117,50 @@ const navigationitems =()=>{
               </BottomSheet>
               </React.Fragment>
        } catch (error) {
-        console.log('error',error)
+        console.log('error Main content',error,haulDetails)
          return <React.Fragment>
-           <BigLoader/><BigLoader/>
-           <BigLoader/>
+          <View  style={{ height: 30,width:30, top:120,position:'absolute', alignSelf:'flex-end',left:20,opacity:status ? 0.2 : 1}} >
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:'100%',height:30  }}/>
+                </TouchableOpacity>
+              </View>
+           {/* <BigLoader/><BigLoader/>
+           <BigLoader/> */}
          </React.Fragment>
        }
      }  
      
+     const isDataReadyDisplay =()=>{
+try {
+  if (viewType == 'camera'  &&  !status) {
+    return true
+  } else if (viewType == 'dashboard'  &&   haulDetails != null && !status ) {
+   return true
+  }else {
+    return false
+  }
+}catch{
+  return false
+}
+    
+       
+     }
+
+     const displayResults = useCallback((index: number) => {
+      return content()
+      }, [isReady]);
   return  <React.Fragment>
-  {haulDetails === null ?   <View  style={{ height: 30,width:30, top:60,position:'absolute', alignSelf:'flex-end',left:20,opacity:status ? 0.2 : 1}} >
+    {/* {mainDataStatus ?  <View  style={{ height: 30,width:30, top:60,position:'absolute', alignSelf:'flex-end',left:20,opacity:status ? 0.2 : 1}} >
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:'100%',height:30  }}/>
+                </TouchableOpacity>
+              </View>  :null } */}
+  {!isDataReadyDisplay() ?   <View  style={{ height: 30,width:30, top:60,position:'absolute', alignSelf:'flex-end',left:20,opacity:status ? 0.2 : 1}} >
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                 <Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:'100%',height:30  }}/>
                 </TouchableOpacity>
               </View> : content()} 
+           
   <StatusBar style={'dark'}/></React.Fragment>
   
 }

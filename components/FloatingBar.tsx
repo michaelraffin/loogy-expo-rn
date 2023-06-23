@@ -1,31 +1,52 @@
 import * as React from 'react';
 import { Image, TouchableOpacity, View, Dimensions, StyleSheet } from 'react-native';
 import { Text } from '@ui-kitten/components';
+import { BookingContext } from '../components/Context/UserBookingContext';
 var width = Dimensions.get('window').width;
-export default function Cart({ navigation, index ,showAccount}) {
+export default function Cart({ navigation, index ,showAccount,userProfile}) {
 	var id = index;
     var screen = navigation
 	var borderRadius = 20;
-const userType =()=> {
-	// 0 == Customer
-	// 1 == Driver
-	return 1
-}
-	
+		const userType =()=> {
+			try {
+				if (userProfile.user_details.applicantType === "Shipper") {
+					return 0
+				} else {
+					return  1
+				}
+			} catch (error) {
+				return 1
+			}
+			// 0 == Customer
+			// 1 == Driver
+		
+		}
+	const {setUserVehicle,getCurrentUser,getCurrentUserLocation} = React.useContext(BookingContext);
+
+	React.useEffect(() => {
+			try {
+				console.log('FLOATBAR  CONTEXT', userProfile.user_details)
+			} catch (error) {
+				console.log('error FLOATBAR',error)
+			}
+		},[]);
+
+
+
 	const userLoginContent = ()=>{
 return <React.Fragment>
- 
-			{/* {userType() === 1 ? <TouchableOpacity onPress={() => screen.navigate('Home', { screen: 'DriverDashboard' })}>
+ {userType() === 1 ? <TouchableOpacity onPress={() => screen.navigate('RealTimeMap', { screen: 'RealTimeMap' })}>
             <View style={id === 1 ? styles.activeView : styles.inActiveView}
                 >
                     <Image
-						source={{ uri: 'https://www.seekpng.com/png/full/1-11418_png-file-sugar-icon-png.png' }}
+						source={{ uri: 'https://img.freepik.com/premium-vector/live-streaming-icon-symbol-live-stream-icon-video-broadcasting-tv-news-movie-show-button-sign_659151-929.jpg?w=2000' }}
 						style={id === 1 ? styles.activeImage : styles.inActiveImage2}
 					/>
-                    	{id === 1 ? <Text style={{ marginLeft: 10, marginRight: 10 }}>Load</Text> : null}
+                    	{id === 1 ? <Text style={{ marginLeft: 10, marginRight: 10 }}>RealTime</Text> : null}
 				</View>
-			</TouchableOpacity> : null} */}
-	{userType() === 1 ? <TouchableOpacity onPress={() => screen.navigate('LoadScanner', { screen: 'QRReader' })}>
+			</TouchableOpacity>  : null }
+
+	<TouchableOpacity onPress={() => screen.navigate('LoadScanner', { screen: 'QRReader' })}>
             <View style={id === 1 ? styles.activeView : styles.inActiveView}
                 >
                     <Image
@@ -34,8 +55,8 @@ return <React.Fragment>
 					/>
                     	{id === 1 ? <Text style={{ marginLeft: 10, marginRight: 10 }}>Load</Text> : null}
 				</View>
-			</TouchableOpacity> : null}
-			
+			</TouchableOpacity> 
+			{userType() === 1 ?null  : null}
 
 			<TouchableOpacity onPress={() => screen.navigate('History', { screen: 'DriverHistory' })}>
 				<View style={id === 2 ? styles.activeView : styles.inActiveView}>
@@ -43,7 +64,7 @@ return <React.Fragment>
 						source={{ uri: 'https://icon-library.com/images/historical-icon/historical-icon-16.jpg' }}
 						style={id === 2 ? styles.activeImage : styles.inActiveImage}
 					/>
-					{id === 2 ? <Text style={{ marginLeft: 10, marginRight: 10 }}>Task</Text> : null}
+					{id === 2 ? <Text style={{ marginLeft: 10, marginRight: 10 }}>{userType() != 1 ? 'Tran..' : 'Task'}</Text> : null}
 				</View>
 			</TouchableOpacity>
 
@@ -57,6 +78,13 @@ return <React.Fragment>
 				</View>
 			</TouchableOpacity>   */}
 </React.Fragment>
+	}
+	var addLoad = ()=>{
+		try {
+			return <View style={{position:'absolute',top:0,marginLeft:'auto',marginRight:'auto'}}><Text>Add here</Text></View>
+		} catch (error) {
+			return null
+		}
 	}
 	var mainContent = ()=> {
 		return (
@@ -82,6 +110,7 @@ return <React.Fragment>
 				justifyContent: 'space-evenly'
 			}}
 		>
+			{/* {addLoad()} */}
 			{/* <TouchableOpacity onPress={() => screen.navigate('Load', { screen: 'Service' })}>
 				<View style={id === 0 ? styles.activeView : styles.inActiveView}>
 					<Image
@@ -104,7 +133,7 @@ return <React.Fragment>
 			</TouchableOpacity>  */}
 
 
-			{userType() === 1 ? <TouchableOpacity onPress={() => screen.navigate('Home', { screen: 'DriverDashboard' })}>
+			<TouchableOpacity onPress={() => screen.navigate('Home', { screen: 'DriverDashboard' })}>
             <View style={id === 0 ? styles.activeView : styles.inActiveView}
                 >
                     <Image
@@ -113,7 +142,8 @@ return <React.Fragment>
 					/>
                     	{id === 0 ? <Text style={{ marginLeft: 10, marginRight: 10 }}>Load</Text> : null}
 				</View>
-			</TouchableOpacity> : null}
+			</TouchableOpacity>
+			{/* {userType() === 1 ? : null} */}
 			{showAccount != null ? userLoginContent() : null}
 		</View>
 		)

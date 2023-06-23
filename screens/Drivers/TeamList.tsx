@@ -66,7 +66,12 @@ export default function LocationPicker({ route, navigation }) {
          setStatus(false)
        }
      }
-
+     const cleanBackNavigation  =()=>{
+      navigation.setParams({
+        isRefresh: true,
+      });
+      navigation.goBack()
+     }
      const didTappedDelete = ()=>{
       setStatus(false)
       deleteService().then(item=>{
@@ -151,6 +156,43 @@ export default function LocationPicker({ route, navigation }) {
         </View>
         )
         }
+
+
+const renderEmptyItem =()=>{
+  if (status === false &&  results.length  === 0){
+    return (  
+      <>
+        <Image source={{ uri: 'https://localflowershop.sgp1.digitaloceanspaces.com/product/1681221754262-Screen%20Shot%202023-04-11%20at%2010.02.11%20PM.png'}} style={{ width:300,
+          height:250,
+          resizeMode: 'cover'}}/>
+          <Text 
+      category="p1"
+    >Empty load
+    </Text>
+    <Button 
+
+onPress={()=>navigation.navigate('Home', { screen: 'Service' })} 
+    style={{marginTop:20,borderRadius:50}}>
+      Create your load
+    </Button>
+    
+      </>   
+    )
+  }else {
+    return (<>
+
+<Image source={{ uri: 'https://cdn.dribbble.com/users/1113690/screenshots/6231933/empty_state_bino_4x.jpg?compress=1&resize=1600x1200'}} style={{ width:300,
+          height:250,
+          resizeMode: 'cover'}}/>
+    <Text 
+      category="6"
+    >Loading....
+    </Text>
+    </>     
+    )
+    // Loading....
+  }
+}
 const renderList = ()=> { 
     return (<FlatList
     style={{backgroundColor:'white',marginTop:120}}
@@ -171,14 +213,7 @@ const renderList = ()=> {
             marginTop:0
           }}
         >
-      <Image source={{ uri: 'https://cdn.dribbble.com/users/1113690/screenshots/6231933/empty_state_bino_4x.jpg?compress=1&resize=1600x1200'}} style={{ width:300,
-          height:250,
-          resizeMode: 'cover'}}/>
-        <Text 
-            category="6"
-          >Loading....
-          </Text>
-          
+        {renderEmptyItem()}
         </View>
       </Layout>
       }

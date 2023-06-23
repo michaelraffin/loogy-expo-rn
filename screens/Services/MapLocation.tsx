@@ -14,6 +14,7 @@ import Toast from 'react-native-toast-message';
 var width = Dimensions.get('window').width; //full width
 var height = Dimensions.get('window').height; //full height
 import {CheckMark} from '../../components/Svgs'
+import CardJourney from '../../components/Journey/Card'
 import {schedulePushNotification} from '../../screens/Cart/Notification';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { FlatList, TextInput } from 'react-native-gesture-handler';
@@ -22,7 +23,17 @@ import Store from  '../../components/Context/MapContext'
 import {MapContext} from '../../components/Context/MapContext'
 import ReactNativeAlgoliaPlaces from 'react-native-algolia-places'
 import axios from 'axios';
+import {BookingContext} from  '../../components/Context/UserBookingContext'
+import {productStats} from '../../components/Utils/ServiceCall'
 import MapView, { Marker,Polyline,PROVIDER_GOOGLE} from "react-native-maps";
+
+
+// var initialPHRegion = {
+//   latitude: 14.560709104678233,
+//   latitudeDelta: 0.5017048734069078,
+//   longitude: 121.01807774975896,
+//   longitudeDelta: 0.23325998336076736
+// }
 
 export default function LocationPicker({ route, navigation }) {
     const ref = useRef();
@@ -32,28 +43,67 @@ export default function LocationPicker({ route, navigation }) {
     const [status,setStatus] = useState(false)
     const [isGeo,setGeo] = useState(false)
     const [errorStatus,setError] = useState(false)
+    const [initialPHRegion,setInitialRegion] = useState({
+      latitude: 14.560709104678233,
+      latitudeDelta: 0.5017048734069078,
+      longitude: 121.01807774975896,
+      longitudeDelta: 0.23325998336076736
+    })
     const [showMap,setShowMap] = useState(false)
     const [selectedAddress,setSelectAddress] = useState(null)
     const [geoConverted,setGeoConverted] = useState(null)
     const [journeyType,setJourneyType] = useState(route.params.journeyType)
     const [mapSearchAddress,mapSearchSetAddress] = useState(null)
     const {didSetAddress} = useContext(MapContext);
+    const {setLocation,getCurrentUserLocation} = React.useContext(BookingContext);
+
+
+
     useEffect(() => {
+
+      if (getCurrentUserLocation() != null) {
+        console.log('getCurrentUserLocation()',getCurrentUserLocation())
+        setInitialRegion(getCurrentUserLocation().coordinates)
+      }
+      
+      console.log('searched Type,',journeyType)
+     
     }, [])
     function didSelectMap(item){
+      
         didSetAddress(item.item)
         navigation.goBack() 
-        // didSetAddress(item.item.place_name)
-        // Context._currentValue.didTapped(item)
+
     }
+    function getRouteType(){
+      try {
+        return journeyType
+      } catch (error) {
+        return 'ErrorType'
+      }
+    }
+async function recordProductStats(e) {
+  try {
+      const data = {storeOwner:"Loogy",cType:`searchedLocation${getRouteType()}`,cName:`${Platform.OS.toUpperCase()}`,"data":e,"date":moment(Date()).format(`MMMM DD, YYYY h:mm:ss A`)}
+      const response = await productStats.put('/Items', data) 
+      console.log('response in firebase stats',response.config.data)
+      return  response
+  } catch (error) {
+    console.log('error in async record firebase')
+  }
+}
     function didTapSet(){
       didSetAddress(mapSearchAddress)
       navigation.goBack() 
   }
     function fetchOrderTracker (){
-        console.log('www')
-      
-        axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${searchValue}.json?country=ph&language=en&limit=15&autocomplete=true&fuzzyMatch=true&routing=true&access_token=pk.eyJ1IjoibWFtbmlkeiIsImEiOiJjanZsNnhhZ24wdDE1NDlwYmRvczJzNDk2In0.Bl06Qp0TgR-KfisAsKbciQ`
+      recordProductStats(searchValue)
+      let country = "ph"
+      if (getCurrentUserLocation() != null) {
+         country = getCurrentUserLocation().isoCountryCode.toLowerCase()
+      }
+        console.log('country code',country)
+        axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${searchValue}.json?country=${country}&language=en&limit=15&autocomplete=true&fuzzyMatch=true&routing=true&access_token=pk.eyJ1IjoibWFtbmlkeiIsImEiOiJjanZsNnhhZ24wdDE1NDlwYmRvczJzNDk2In0.Bl06Qp0TgR-KfisAsKbciQ`
         // {
         //     country:"ph",
         //     autocomplete:true,
@@ -95,19 +145,34 @@ export default function LocationPicker({ route, navigation }) {
     }
 
     const getGeoCoder = (coordinate)=>{
-      console.log('coordinate',coordinate)
+      try {
+        
+ 
+        console.log('getGeoCodder', coordinate)
         setGeo(true)
-        getReverse(coordinate).then(item=>{
+          getReverse(coordinate).then(item=>{
+            console.log('getGeoCodder', coordinate)
           setGeoConverted(item[0])
           var generateFullName = item[0].city +", "+item[0].name +", "+ item[0].country
           var geometry = {geometry:{
-            coordinates:[coordinate.longitude,coordinate.latitude]
-          },
-          place_name:generateFullName, 
+            type: "Point", 
+            coordinates:[coordinate.longitude,coordinate.latitude]},
+            place_name:generateFullName, 
+            meta_details:item[0]
+          }
+
+
+          console.log('getReverse item[0]', geometry)
+          if (item.length != 0 ) {  
+            recordProductStats(item[0])
           }
           mapSearchSetAddress(geometry)
           setGeo(false)
         })
+      } catch (error) {
+        console.log('error in geo coder',error)
+      }
+      
     }
 
     async function getReverse(item){
@@ -118,18 +183,19 @@ export default function LocationPicker({ route, navigation }) {
       let address =  await Location.reverseGeocodeAsync(keys);
       return address
     }
-    const initialPHRegion = {
-      latitude: 14.560709104678233,
-      latitudeDelta: 0.5017048734069078,
-      longitude: 121.01807774975896,
-      longitudeDelta: 0.23325998336076736
-    }
+
 
 const displayMap = ()=>{
   try {
     return   <MapView
-    // mapType={PROVIDER_GOOGLE}
-    initialRegion = {initialPHRegion}
+      initialCamera={{
+        center: initialPHRegion,
+        pitch: 0,
+        heading: 0,
+        altitude: 1000,
+        zoom: 13,
+    }} 
+    
     showsBuildings={true} 
     provider={null}
     rotateEnabled={false}
@@ -153,6 +219,7 @@ const displaySetButton = ()=>{
     return <View/>
   }
   try {
+    
     return (
       <Button  status="primary" 
       disabled={isGeo}  
@@ -163,13 +230,22 @@ const displaySetButton = ()=>{
        opacity: isGeo ? 0.2 : 1,
       marginLeft: 20, bottom: 20, backgroundColor:  'black', 
       borderColor:  'black' }}>
-     <Text style={{ color: 'white', fontWeight: 'bold' }}>{isGeo ?"Processing..." : `${geoConverted.name}, ${geoConverted.city}, ${geoConverted.region}`}</Text>
+     {/* <Text style={{ color: 'white', fontWeight: 'bold' }}>{isGeo ?"Processing..." : `${geoConverted.name}, ${geoConverted.city}, ${geoConverted.region}`}</Text> */}
+     <Text style={{ color: 'white', fontWeight: 'bold' }}>Set address</Text>
    </Button>
     )
   }catch{
     return <View/>
   }
   
+}
+
+const displayGeoLocation = ()=>{
+  try {
+    return `${geoConverted.name}, ${geoConverted.city}, ${geoConverted.region}`
+  } catch (error) {
+    return ''
+  }
 }
     const mapPickerContent = ()=>{
         return (<Store>
@@ -202,6 +278,14 @@ opacity: isGeo ? 0.1 : 1 }}/>
               {rightContent()}
 							</View> 
 	</View>
+  <Text style={{position:'absolute',bottom:80,left:20,fontWeight:'bold',fontSize:30,marginRight:120,
+shadowColor: "#000",
+shadowOffset: {
+  width: 0,
+  height: 2},
+shadowOpacity: 0.25,
+shadowRadius: 3.84,
+elevation: 5}}>{isGeo ?"..." :displayGeoLocation()}</Text>
   {displaySetButton()}
   <View onPress={() => navigation.goBack()} style={{ height: 50,width:'auto',position:'absolute', alignSelf:'flex-end',top:60,left:20}} >
               <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -356,7 +440,7 @@ opacity: isGeo ? 0.1 : 1 }}/>
       } 
     };
     return (
-      <React.Fragment> 
+      <React.Fragment>
         {showMap ? mapPickerContent()  : mapSearchContent()  }
       </React.Fragment>
        

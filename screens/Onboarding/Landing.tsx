@@ -10,10 +10,13 @@ import {
 	Alert,
 	FlatList
 } from 'react-native';
+import Constants from "expo-constants"
 import { ApplicationProvider, Text, Layout, Button, Divider, Input } from '@ui-kitten/components';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { supabase,supabaseUrl,supabaseAnonKey,siginWithSupabase} from '../Drivers/slogin' 
 import {BookingContext} from  '../../components/Context/UserBookingContext'
+import MapRealtime from  '../Drivers/MapRealTime'
+import ChatPage from  '../Chat/ChatPage'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {axios,axiosV2} from '../../components/Utils/ServiceCall'
 import LocationPicker from '../../components/Utils/UserLocation'
@@ -21,15 +24,27 @@ import {expo} from '../../app.json'
 import AppUpdatefrom from '../AppUpdate/AppUpdate'
 import {BigLoader} from '../../components/Loader'
 import {registerForPushNotificationsAsync} from '../Cart/Notification'
+import {schedulePushNotification} from '../Cart/Notification';
 var height = Dimensions.get('window').height;
 var width = Dimensions.get('window').width;
+const version = Constants.manifest.version
+
+
+
+
+
+
+const MapTest = ({navigation}) =>{
+	return  <MapRealtime/>
+}
 
 const Landing = ({ navigation }) => {
-const {setUserAccountContext,setDriverDetails,setTypeOfView,setLoginByAuthService} = useContext(BookingContext);
+const {setUserAccountContext,setDriverDetails,setTypeOfView,setLoginByAuthService,getCurrentUserLocation} = useContext(BookingContext);
 const [ status, setStatus ] = useState(true);
 const [ isGooggleActive, setGoogle ] = useState(false);
 const [ isFacebookActive, setFacebook ] = useState(false);
 const [ isPasswordActive, setPassword ] = useState(false);
+const [ isAppleActive, setApple ] = useState(false);
 const [ forceUpdate, setForceUpdate ] = useState(false);
 const [ buildVersion, setBuildVersion ] = useState({android:0,ios:0});
 const [ app, setAppDetails ] = useState(null);
@@ -38,9 +53,8 @@ const [ appForceContent, setForceContent ] = useState({
 	"title": "It's time to update",
 	"subtitle": "Update Loogy app and get new exciting features."
   });
-const [ landingImageContent, setImageLanding ] = useState({heightDevidedBy:2,imageUrl:'',title:'',subtitle:""});
-const [ storeLink, setStoreLink ] = useState({android:'',ios:''});
-
+const [ landingContentDetails, setLandingDetails ] = useState({heightDevidedBy:2,imageUrl:'',title:'',subtitle:""});
+const [ storeLink, setStoreLink ] = useState({android:'',ios:''})
 
 useEffect( ()=> {
 	setupStore()
@@ -82,11 +96,13 @@ const fetchData = async () => {
 const setStoreDetails =(e)=>{
 	try {
 
-			setImageLanding(e.storeSetup.landingContent)
+			setLandingDetails(e.storeSetup.landingContent)
 			setForceContent(e.storeSetup.appForceContent)
 			setGoogle(e.availableLogin.filter((data)=> data.id === 1 )[0].status)
 			setFacebook(e.availableLogin.filter((data)=> data.id === 2 )[0].status)
 			setPassword(e.availableLogin.filter((data)=> data.id === 3 )[0].status)
+			setApple(e.availableLogin.filter((data)=> data.id === 4 )[0].status)
+			
 			setBuildVersion(e.appVersioning)
 			setStoreLink(e.storeSetup)
 
@@ -156,7 +172,7 @@ const landingImage = ()=>{
 			return (
 				<View
 						style={{
-							height: height - height / landingImageContent.heightDevidedBy,
+							height: height - height / landingContentDetails.heightDevidedBy,
 							width: '100%',
 							alignContent: 'center',
 							alignItems: 'center',
@@ -171,7 +187,7 @@ const landingImage = ()=>{
 					>
 						<Image
 							source={{
-								uri:landingImageContent.imageUrl
+								uri:landingContentDetails.imageUrl
 							}}
 							style={styles.image}
 						/>
@@ -194,7 +210,7 @@ const landingImage = ()=>{
 					{landingImage()}
 					<View style={{ backgroundColor: 'white' }}>
 						<Text style={styles.text} category="h1">
-							{landingImageContent.title}
+							{landingContentDetails.title}
 						</Text>
 						<TouchableOpacity  disabled={status}  onPress={() => signInWithDynamicCallBack('google')}>
 							<View
@@ -217,8 +233,12 @@ const landingImage = ()=>{
 								<Text style={{ fontWeight: 'bold' }}>Continue with Google</Text>
 							</View>
 						</TouchableOpacity>
+						
+						{isAppleActive ? displayAppleContent() :  null}
 						{isFacebookActive ? displayFacebookContent(): null}
 						{isPasswordActive ?  displayPasswordContent(): null}
+						<TouchableOpacity><Text style={{fontSize:11,color:'#747d8c',alignItems:'center',alignSelf:'center',flex:1,marginTop:20}}>v{Platform.OS === 'android' ? expo.android.versionCode : version}</Text></TouchableOpacity>
+
 					</View>
 				</View>
 				<View style={{ marginBottom: 60, backgroundColor: 'white' }} />
@@ -253,6 +273,39 @@ const landingImage = ()=>{
 										style={{ width: 30, height: 30, marginLeft: 20 }}
 									/>
 									<Text style={{ fontWeight: 'bold' }}>{isFacebookActive ? 'Continue with Facebook':'Currently disabled' }</Text>
+								</View>
+							</TouchableOpacity>
+			)
+		} catch (error) {
+			return <BigLoader/>
+		}
+	
+	}
+	const displayAppleContent = ()=>{
+		try {
+			return (
+				<TouchableOpacity disabled={status ?true:false}  onPress={() => signInWithDynamicCallBack('apple')}>
+								<View
+									style={{
+										
+										alignContent: 'center',
+										alignItems: 'center',
+										marginBottom: 20,
+										marginTop: 10,
+										marginLeft: 50,
+										marginRight: 50,
+										flexDirection: 'row',
+										justifyContent: 'space-between'
+									}}
+								>
+									<Image
+										source={{
+											uri:
+											Platform.OS === 'android' ?'https://images.crowdspring.com/blog/wp-content/uploads/2022/08/18131304/apple_logo_black.svg_.png':	'https://cdn.freebiesupply.com/images/large/2x/apple-logo-transparent.png'
+										}}
+										style={{ width: 30, height: 30, marginLeft: 20 }}
+									/>
+									<Text style={{ fontWeight: 'bold' }}>{isAppleActive ? 'Continue with Apple':'Currently disabled' }</Text>
 								</View>
 							</TouchableOpacity>
 			)
@@ -307,7 +360,9 @@ const  signInWithDynamicCallBack = (e)=>{
 		displayAlert(e.toUpperCase())
 	} else if (e === 'facebook' && !isFacebookActive ) {
 		displayAlert(e.toUpperCase())
-	}else {
+	} else if (e === 'apple' && !isAppleActive ) {
+		displayAlert(e.toUpperCase())
+	} else {
 		setStatus(true)
 		siginWithSupabase(e).then(item=>{	
 		  setStatus(true)
@@ -356,8 +411,8 @@ const  signInWithDynamicCallBack = (e)=>{
 	
 };
 
-
 export default Landing;
+// export default MapTest;
 const styles = StyleSheet.create({
 	contentContainer: {
 		flex: 1,
@@ -382,9 +437,10 @@ const styles = StyleSheet.create({
 		marginTop: 20,
 		marginBottom: 10,
 		fontWeight: 'bold',
-		marginRight: 150,
+		marginRight: 120,
 		marginLeft: 20,
-		fontSize: 45
+		fontSize: 45,
+		flexWrap: 'wrap'
 	},
 	container: {
 		backgroundColor: 'white',

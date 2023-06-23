@@ -45,11 +45,12 @@ export  const saveEntry = async (value,id)=> {
     if (isObject(value)){
       converted =  JSON.stringify(value)
     }  
+    console.log('isObject(value)',isObject(value))
     console.log('value to save',value)
     let wishList = await AsyncStorage.setItem(id, converted) 
     return  wishList
   } catch (e) {  
-
+    console.log ('error saveEntry',e)
     return null
   } 
 }
@@ -86,10 +87,16 @@ export  const getEntryV2 = async (entryID) => {
   try {
     console.log('calling  getEntryV2',entryID)
     const value = await AsyncStorage.getItem(entryID)
-    return value != null ? JSON.parse(value) : null 
+    console.log('retreitve as string',value)
+    if (value === "isNew4") {
+      return value
+    }else {
+      return value != null ? JSON.parse(value) : null 
+    }
+
     // value != null ?  value : null;
   } catch(e) {
-    console.log('ERROR',e,entryID)
+    console.log('ERROR getEntryV2',e,entryID)
     return null
   }
 

@@ -136,7 +136,7 @@ export default  function ProfileUser({ route, navigation }){
   }
   async function updateProfileService(){ 
     try {
-      const response = await axios.post('/user/Loogy/update_profileV2',{"id":getCurrentUser().id,warehouse:warehouse,user_details:{
+      const response = await axios.post('/user/Loogy/update_profile',{"id":getCurrentUser().id,warehouse:warehouse,user_details:{
         name:membersName,
         contactNumber:mobile,
         logisticName:logisticName,
@@ -452,18 +452,21 @@ async function deleteProfileAccountService(){
 								</View>
                 </TouchableOpacity>
                 
-                {serviceImageLinkList === null ? null :   renderServiceList()}
-                <PickerImage
+                {/* {serviceImageLinkList === null ? null :   renderServiceList()} */}
+                {/* <PickerImage
           requestType="PROFILE"
            referenceOrder={"referenceOrderRef.current"}
               onReload={(link) =>  setServiceImageLinkList( [...serviceImageLinkList, link.link]  )}
-            />
-<Text>Add any Government ID</Text>
-<PickerImage
+            /> */}
+{/* <Text style={{marginLeft:20}}>Add any Government ID</Text>
+      <PickerImage
           requestType="PROFILE"
            referenceOrder={"referenceOrderRef.current"}
               onReload={(link) =>  setServiceImageLinkList( [...serviceImageLinkList, link.link]  )}
-            />
+        /> */}
+
+
+
       {/* {driversContent()} */}
       {/* <Text style={{marginTop:2,marginLeft:20,fontWeight:'bold'}} category='h6'>Driver Profile</Text> */}
   <View style={{opacity:false ? 0.7 : 1,justifyContent:'center',alignContent:'center',alignItems:'center'}}>

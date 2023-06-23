@@ -40,12 +40,16 @@ const validateQRDetails = ()=>{
         return 'route.params.referenceOrder'
     }
 }
+const tappedURL=(e)=>{
+    Linking.openURL(`https://tracker.loogy.co/${e}`)
+}
 function currencyFormat(num) {
     return '₱' + num.toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
   }
 console.log('validateQRDetails()',validateQRDetails())
     return <>
     <View style={{alignItems:'center',alignContent:'center',justifyContent:'center',height:height + 40}}>
+    
         <Text category='h5' style={{fontWeight:'bold'}}>Place your QR Code Scanner</Text>
         <Text category='p1' style={{marginTop:10,marginBottom:20}}>Share this QR code to your preferred Carrier</Text>
         <TouchableOpacity>
@@ -60,7 +64,7 @@ console.log('validateQRDetails()',validateQRDetails())
     </View>
     </View>
     <Text  category="h5" style={{fontWeight:'bold',marginLeft:'20%',marginTop:20}}>
-             {true ? Platform.OS === 'android' ? currencyFormat(Number(route.params.referenceOrder.item.item.offeredPrice)) : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(haulDetails.item.offeredPrice)) : '0.00'}
+             {true ? Platform.OS === 'android' ? currencyFormat(Number(route.params.referenceOrder.item.item.offeredPrice)) : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(route.params.referenceOrder.item.item.offeredPrice)) : '0.00'}
             </Text>
     </TouchableOpacity>
             <Layout style={{margin:20,borderRadius:5,backgroundColor:'#f7f1e3'}} level="1" >
@@ -74,7 +78,18 @@ console.log('validateQRDetails()',validateQRDetails())
             </Text>
             </View>  
         </Layout>
+        <Text category='h5' style={{fontWeight:'bold',color:'#0652DD'}}>***{validateQRDetails()}***</Text>
+        <Text category='c1' style={{color:'#b2bec3'}}>Tracking code</Text>
+        {/* <TouchableOpacity onPress={()=>tappedURL(validateQRDetails())}>
+            <View style={{borderRadius:50,alignContent:'center',alignItems:'center',justifyContent:'center',flex:'row'}}>
+            <Text category='c1' style={{color:'#0652DD',margin:10}}>
+            <Image  source={{uri:'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/open-external-link-icon.png'}}  style={{width:10,height:10  }}/> View Link</Text>
+     
+            </View>
+
+         </TouchableOpacity> */}
     </View>
+    
     <View  style={{ height: 30,width:30, top:60,position:'absolute', alignSelf:'flex-end',left:20,opacity:1}} >
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <View style={{width:30,height:30,borderRadius:50/2}}><Image  source={{uri:'https://www.iconninja.com/files/228/393/66/direction-navigation-back-arrow-circle-left-icon.png'}}  style={{width:30,height:30  }}/></View>

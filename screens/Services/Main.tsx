@@ -99,6 +99,7 @@ console.log('SERVICE MAIN MICHAEL')
   const  [address1,setLocation] = useState(null)
   const  [logisticName,setLogisticName] = useState(null)
   const [isNew,setUser] = useState(false)
+  const [matrixDetails,setMatrixDetails] = useState(null)
   const { Details, updateCart } = cart()
   var empty = []
   const toggleSwitch = () => {
@@ -117,11 +118,23 @@ console.log('SERVICE MAIN MICHAEL')
    setAddress(addresssss)
   },[addresssss])
 
-  // useEffect(() => {
-  //   if (trips[0].arrivalDetails.coordinates.length != 0 && trips[0].departDetails.coordinates.length != 0) {
-  //     fetchMatrix()
-  //   }
-  //  },[trips])
+  useEffect(() => {
+    try {
+      
+    if (trips[0].arrivalDetails.coordinates.length != 0 && trips[0].departDetails.coordinates.length != 0) {
+        fetchMatrix(trips[0],trips[0]).then(matrix =>{
+        console.log('matrix',matrix)  
+        if (matrix.summary != undefined) {
+          setMatrixDetails(matrix)
+        }
+        
+      })
+      
+    }
+    } catch (error) {
+        console.log('error fetch matrix')
+    }
+   },[trips])
   
   const updateProfileSettings =()=>{
     setLoading(true)
@@ -468,14 +481,14 @@ if (limitPerCategory >= index+ 1 ){
   }
   const copyToClipboard = () => {
   }
-  function renderFields(prefferedAddress) {
+  function renderFields(payload) {
+    var  prefferedAddress =  payload.address
     var type = category
     var content = null
     var oneway = 'One-Way'
     var twoway = 'Round-Trip'
     var multi = 'Multi-Trip'
     setAddddddress(prefferedAddress)
-    console.log('prefferedAddress',prefferedAddress)
     switch (type) {
       case oneway:
         content = (
@@ -567,32 +580,45 @@ if (limitPerCategory >= index+ 1 ){
     try {
     // console.log('is now fetching?',trips[0].arrivalDetails.coordinates.length != 0 && trips[0].departDetails.coordinates.length != 0)
 
+      
 //  let list =  trips.map( async item => {
         if (item.departDetails.coordinates.length >= 1 && item.arrivalDetails.coordinates.length >= 1){
-          let depart = item.departDetails.coordinates.reverse()
-          let arrival = item.arrivalDetails.coordinates.reverse()
-          // const matrixResult = await fetchMatrixService(depart,arrival)
-          // console.log('matrixResult',matrixResult.summary)
-          // item.departDetails.matrix =  matrixResult.summary.arrivalTime
-          // return   disectMatrix(matrixResult.summary.arrivalTime)
-          let result =  await fetchMatrixService(depart,arrival)
-          console.log('ohhh',result.summary.arrivalTime)
-        return  result.summary
+          let depart = item.departDetails.coordinates
+          let arrival = item.arrivalDetails.coordinates
+          console.log('depart-z',depart)
+          console.log('arrival-z',arrival)
+           fetchMatrixService(depart,arrival).then(result =>{
+            console.log('ohhh',result.summary)
+            if (result.summary != undefined) {
+              setMatrixDetails(result)
+            }
+          
+           })
+          
+        
+        }else {
+          fetchMatrixService(null,null)
         }
     // })
     // console.log('my Listttttt',list)
     } catch (error) {
-      console.log('error',error)
+      console.log('error fetchMatrix',error)
     }
   }
 
   async function fetchMatrixService (depart,arrival){
     try {
+      
+      // let composedUrl = `https://api.tomtom.com/routing/1/calculateRoute/14.615648,121.05373:14.491046,121.004463/json?travelMode=truck&key=1hAGLyVpeOqc154z5brx2rls2WmqYtnG`
       let composedUrl = `https://api.tomtom.com/routing/1/calculateRoute/${depart}:${arrival}/json?travelMode=truck&key=1hAGLyVpeOqc154z5brx2rls2WmqYtnG`
+      // https://api.tomtom.com/routing/1/calculateRoute/14.615648,121.05373:14.491046,121.004463/json?travelMode=truck&key=1hAGLyVpeOqc154z5brx2rls2WmqYtnG
+      // https://api.tomtom.com/routing/1/calculateRoute/121.04726433889,14.537948625411756:14.399420597961955,121.0435594601396/json?travelMode=truck&key=1hAGLyVpeOqc154z5brx2rls2WmqYtnG
       // 'https://api.tomtom.com/routing/1/calculateRoute/14.652937%2C121.034437%3A10.30984%2C123.893107/json?travelMode=truck&key=1hAGLyVpeOqc154z5brx2rls2WmqYtnG'
-
+      
       console.log('finalURL',composedUrl)
       const response = await Axios.get(composedUrl);
+
+      console.log('response',response)
       return response.data.routes[0]
     } catch (error) { 
       console.log('error matrix',error)
@@ -603,17 +629,22 @@ if (limitPerCategory >= index+ 1 ){
   const setAddress =(e)=>{
     const newTodos = [...trips];
     var parent = newTodos[currentIndex]
+    console.log('extra payload',e.meta_details)
     if (mapType === 'Arrival') {
       parent['arrival'] = e.place_name
       parent['arrivalDetails'] =  {
         coordinates : e.geometry.coordinates,
-        address:e.place_name
+        type:"Point",
+        address:e.place_name,
+        meta_details:e.meta_details
       } 
     }else if (mapType === 'Depart') {
       parent['depart'] = e.place_name
       parent['departDetails'] = {
         coordinates : e.geometry.coordinates,
-        address:e.place_name
+        type:"Point",
+        address:e.place_name,
+        meta_details:e.meta_details
       }
     }
     setMultiTrip(newTodos)
@@ -712,7 +743,8 @@ const renderMainContent = ()=> {
       renderItem={(item) =>  
         <MapContext.Consumer>
         {items =>
-        (renderFields(items.address))
+        (renderFields(items))
+        
         }
       </MapContext.Consumer>
       } 
@@ -724,26 +756,135 @@ const renderMainContent = ()=> {
     return null
   }
 }
+const getTime = (e)=>{
+  try {
+    let today = new Date()
+    return moment(today).format('LL').toString() == moment(e).format('LL').toString()  ? 'Today':'Tomorrow'
+  } catch (error) {
+    return ''
+  }
+}
+const getSpentTime = (e)=>{
+  try {
+    let parsedTime = {
+      type:'',
+      value:''
+    }
+  let result  =  parseInt(e / 60)
+  if (e < 60 ) {
+    parsedTime.type = 'seconds'
+    parsedTime.value = e
+    return parsedTime
+  } else if (e < 3600 ) {
+      parsedTime.type = parseInt(e / 60) > 1 ?  'mns' :'mn'
+      parsedTime.value = parseInt(e / 60)
+      return parsedTime
+    } else if (e >= 3600 || parseInt(e / 3600) > 24 ) {
+      parsedTime.type = parseInt(e / 3600) > 1 ?'hours' : 'hour'
+      parsedTime.value =  parseInt(e / 3600)
+      return parsedTime
+    } else {
+      parsedTime = {
+        type: parseInt(e / 86400) > 1 ?'days' : 'day',
+        value :parseInt(e / 86400)  
+      }
+      return parsedTime
+    }
+  } catch (error) {
+    return 'Error'
+  }
+}
+const kmtoMilesConverter =(e)=>{
+  try {
+    var object ={}
+    if (e < 1000){
+         object =  {  
+        type: e,
+        value :'m'
+      }
+    
+    
+    } else if (e > 1000 || e <= 1609.34){
+      object =  {  
+        type:   (e / 1000),
+        value :'km'
+      }
+      return object
+    } else {
+       object =  {  
+        type:   (e / 1609.34),
+        value : (e / 1609.34) > 1 ? 'mile' : 'miles'
+      }
+      return object
+    }
+
+
+
+  } catch (error) {
+      object =   { 
+    type:  '',
+    value :''
+  }
+  return object
+  }
+}
+const displayFairMatrix = ()=>{
+  if (category === 'One-way') {
+    try {
+      return  <View>
+      <View style={{flexDirection:'row',marginTop:20,marginLeft:20,marginRight:20,justifyContent:'space-between'}}>
+             <View style={{backgroundColor:'white',height:80,justifyContent:'center',alignItems:'center'}}>
+               <Text style={{fontWeight:'bold',fontSize:20,color:'#130f40'}}>{matrixDetails === null ? '' : (matrixDetails.summary.lengthInMeters / 1000)}</Text>
+               <Text style={{fontWeight:'light',fontSize:11,color:'#a4b0be'}}>{matrixDetails === null ? '' : kmtoMilesConverter(matrixDetails.summary.lengthInMeters).value}</Text>
+               <Text style={{fontWeight:'light',fontSize:11,color:'#a4b0be'}}>Distance</Text>
+             </View>
+             <View style={{backgroundColor:'white',height:80,width:'auto',justifyContent:'center',alignItems:'center'}}>
+             <Text style={{fontWeight:'bold',fontSize:20,color:'#130f40'}}>{matrixDetails === null ? '':moment(matrixDetails.summary.arrivalTime).format('MMM DD')}</Text>
+             <Text style={{fontWeight:'light',fontSize:11,color:'#a4b0be'}}>{matrixDetails === null ? '': getTime(matrixDetails.summary.arrivalTime)}</Text>
+               <Text style={{fontWeight:'light',fontSize:11,color:'#a4b0be'}}>ETA</Text>
+             </View>
+             <TouchableOpacity>
+             <View style={{backgroundColor:'white',height:80,justifyContent:'center',alignItems:'center',borderRadius:10}}>
+             <Text style={{fontWeight:'bold',fontSize:19,color:'#2c3e50'}}>{matrixDetails === null ? '' : getSpentTime(matrixDetails.summary.travelTimeInSeconds).value}</Text>
+             <Text style={{fontWeight:'light',fontSize:11,color:'#a4b0be'}}>{getSpentTime(matrixDetails.summary.travelTimeInSeconds).type}</Text>
+               <Text style={{fontWeight:'light',fontSize:11,color:'#a4b0be'}}>Total Time</Text>
+             </View>
+             </TouchableOpacity>
+           </View>
+           <View style={{width:width - 20,height:2,backgroundColor:'#3742fa'}}/>
+      </View>
+    } catch (error) {
+      return null
+    }
+  }
+   
+}
 const renderFooterContent =()=>{
+  try {
+    
   return <>
-    <View style={{backgroundColor:'white',borderColor:'#dcdde1',borderWidth:0.5,alignItems:'center',alignContent:'center',justifyContent:'space-between',flexDirection: 'row',marginTop:20}}>
-         <Text style={{marginLeft:25  }}>{isEnabled?'Backload' : 'Not a backload'}</Text>
-         <Switch
-         style={{marginRight:20}}
-        trackColor={{ false: "#767577", true: "#ced6e0" }}
-        thumbColor={isEnabled ? "#6ab04c" : "#f4f3f4"}
-        ios_backgroundColor="#3e3e3e"
-        onValueChange={toggleSwitch}
-        value={isEnabled}
-      /></View>
-      <Button status="primary"  disabled={isButtonDisabled()} onPress={()=>nextServiceDetails()} style={{ borderRadius: 40, width: width - 40, marginLeft: 20, marginTop: 40,marginBottom:32, backgroundColor:  isButtonDisabled()  ? 'gray' : 'black', borderColor:  isButtonDisabled()  ? 'gray' : 'black',opacity:isButtonDisabled() ? 0.8 : 1 }}>
-             <Text style={{ color: 'white', fontWeight: 'bold' }}>Select Vehicle</Text>
-           </Button>
- </>
+    {displayFairMatrix()}
+   <View style={{backgroundColor:'white',borderColor:'#dcdde1',alignItems:'center',alignContent:'center',justifyContent:'space-between',flexDirection: 'row',marginTop:20}}>
+        <Text style={{marginLeft:25  }}>{isEnabled?'Backload' : 'Not a backload'}</Text>
+        <Switch
+        style={{marginRight:20}}
+       trackColor={{ false: "#767577", true: "#ced6e0" }}
+       thumbColor={isEnabled ? "#6ab04c" : "#f4f3f4"}
+       ios_backgroundColor="#3e3e3e"
+       onValueChange={toggleSwitch}
+       value={isEnabled}
+     /></View> 
+     <Button status="primary"  disabled={isButtonDisabled()} onPress={()=>nextServiceDetails()} style={{ borderRadius: 40, width: width - 40, marginLeft: 20, marginTop: 40,marginBottom:32, backgroundColor:  isButtonDisabled()  ? 'gray' : 'black', borderColor:  isButtonDisabled()  ? 'gray' : 'black',opacity:isButtonDisabled() ? 0.8 : 1 }}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Select Vehicle</Text>
+          </Button>
+</>
+  } catch (error) {
+    return null
+  }
 }
 const renderHeaderContent =()=>{
   return <React.Fragment>
-          <View style={{backgroundColor:'white'}}> 
+          <View style={{backgroundColor:'white'}}>
           <View style={{flexDirection:'row',marginTop:60}}>
 				<Text style={{color:'black',marginLeft:20,marginRight:0,fontWeight:'light',fontSize:40,marginTop:10}} >Create</Text>
 				<Text style={{color:'black',marginLeft:10,marginRight:50,fontWeight:'bold',fontSize:40,marginTop:10}} >Load</Text>
@@ -795,7 +936,7 @@ const mainContent =()=>{
         {showCalendar ? displayAndroidCalendar() : null}
         <MapContext.Consumer>
             {items =>
-            (renderFields(items.address))
+            (renderFields(items))
             }
           </MapContext.Consumer>
 
@@ -896,7 +1037,7 @@ const continueProfile =()=>{
 					/>
               <Input
             value={userEmail}
-      disabled={true}
+          disabled={true}
 						label="Email"
 						style={{ marginTop: 10,marginLeft:20 ,marginRight:20}}
               placeholder="jaun@delacruz.com"
